@@ -1,0 +1,933 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Guard Application</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=Source+Sans+3:wght@400;600;700&display=swap"><style>/* Layout: one section per screen, sticky progress bar on top, fixed Back/Next bar at the bottom; phone first, centered column on larger screens. */
+:root{--bg:#f2f3ee;--surface:#ffffff;--ink:#1b2420;--muted:#59645c;--line:#d2d8cf;--accent:#2f5a44;--accent-ink:#ffffff;--soft:#e4ede7;--brass:#8a6410;--warn-bg:#fff4d3;--warn-line:#d5a62a;--err:#a8281f;--err-bg:#fbe9e7;--yes-bg:#fff0d9;--yes-line:#d99a3a;--head:"Barlow Condensed","Arial Narrow",Arial,sans-serif;--body:"Source Sans 3",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121715;--surface:#1b2420;--ink:#e9eeea;--muted:#a3afa7;--line:#34413a;--accent:#7cc19b;--accent-ink:#0d1812;--soft:#22322a;--brass:#e0b85a;--warn-bg:#3a3115;--warn-line:#a8862a;--err:#f29a91;--err-bg:#3b1f1d;--yes-bg:#3a2d17;--yes-line:#b17d2c;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#121715;--surface:#1b2420;--ink:#e9eeea;--muted:#a3afa7;--line:#34413a;--accent:#7cc19b;--accent-ink:#0d1812;--soft:#22322a;--brass:#e0b85a;--warn-bg:#3a3115;--warn-line:#a8862a;--err:#f29a91;--err-bg:#3b1f1d;--yes-bg:#3a2d17;--yes-line:#b17d2c;color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 var(--body)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+h1,h2,h3{font-family:var(--head);font-weight:600;line-height:1.1;margin:0;text-wrap:balance;letter-spacing:.01em}
+.wrap{max-width:680px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--surface);border-bottom:1px solid var(--line)}
+.top .wrap{padding-top:10px;padding-bottom:10px}
+.toprow{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:14px;color:var(--muted)}
+.toprow b{color:var(--ink);font-weight:600}
+.chip{font-size:12px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:var(--brass);white-space:nowrap}
+.bar{height:6px;border-radius:3px;background:var(--soft);margin-top:8px;overflow:hidden}
+.fill{height:100%;background:var(--accent);border-radius:3px}
+main{padding-top:20px;padding-bottom:130px}
+main>h2{font-size:32px;text-transform:uppercase}
+.blurb{margin:8px 0 0;color:var(--muted);max-width:60ch}
+.grid,.follow{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px 12px}
+.grid{margin-top:18px}
+.grid>*,.follow>*{grid-column:span 12;min-width:0}
+.grid>.s,.follow>.s{grid-column:span 6}
+@media (min-width:480px){.grid>.s,.follow>.s{grid-column:span 3}.grid>.m,.follow>.m{grid-column:span 4}.grid>.l,.follow>.l{grid-column:span 6}}
+.f>label,.q{display:block;font-weight:600;font-size:15px;line-height:1.35;margin:0 0 6px}
+.q ul{margin:8px 0 2px;padding-left:20px;font-weight:400}
+.q li{margin:5px 0}
+.q .sub{font-weight:400;color:var(--muted)}
+.rq{color:var(--err)}
+.tag{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--brass);margin-bottom:4px}
+input[type=text],input[type=tel],input[type=email],input[type=date],input[type=number],input[type=password],select,textarea{display:block;width:100%;min-width:0;min-height:48px;padding:10px 12px;font:16px/1.3 var(--body);color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:8px}
+textarea{min-height:100px;resize:vertical}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.ro{min-height:48px;padding:11px 12px;border:1.5px dashed var(--line);border-radius:8px;color:var(--muted);overflow-wrap:anywhere}
+.seg{display:flex;gap:8px}
+.seg.sw{flex-wrap:wrap}
+.seg label{position:relative;display:block;flex:1 1 0;min-width:0}
+.seg.sw label{flex:0 1 auto}
+.seg input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
+.seg span{display:flex;align-items:center;justify-content:center;text-align:center;min-height:48px;padding:8px 14px;border:1.5px solid var(--line);border-radius:8px;background:var(--surface);font-weight:600}
+.seg input:checked+span{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.seg input:focus-visible+span{outline:3px solid var(--accent);outline-offset:2px}
+.follow{margin-top:12px;padding:14px 12px;background:var(--soft);border-radius:8px}
+.yn .q{font-weight:500;font-size:16px}
+.err>label,.err>.q{color:var(--err)}
+.err input[type=text],.err input[type=tel],.err input[type=email],.err input[type=date],.err select{border-color:var(--err)}
+.err>.seg span{border-color:var(--err)}
+fieldset.err{border-color:var(--err)}
+.em{color:var(--err);font-size:14px;font-weight:600;margin-top:6px}
+fieldset{min-width:0;margin:0;padding:14px;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+legend{font-family:var(--head);font-size:21px;font-weight:600;padding:0 6px;letter-spacing:.01em}
+fieldset>.grid{margin-top:4px}
+.rep{display:grid;gap:14px}
+.card{position:relative}
+.rm{position:absolute;top:-6px;right:10px;background:var(--surface);border:0;padding:4px 8px;font:600 14px var(--body);color:var(--err);cursor:pointer;min-height:32px}
+.add{min-height:48px;border:1.5px dashed var(--accent);background:transparent;color:var(--accent);border-radius:8px;font:600 16px var(--body);cursor:pointer}
+.note{padding:12px 14px;border-radius:8px;background:var(--soft);font-size:15px}
+.note p{margin:0 0 6px}
+.note p:last-child{margin:0}
+.note.warn{background:var(--warn-bg);border:1px solid var(--warn-line)}
+.note.help{background:var(--err-bg);border:1px solid var(--err)}
+.alert{margin-top:18px;padding:12px 14px;border-radius:8px;background:var(--err-bg);border:1.5px solid var(--err);font-weight:600}
+.chk{display:flex;gap:12px;align-items:flex-start;min-height:48px;padding:12px;margin-top:8px;background:var(--surface);border:1.5px solid var(--line);border-radius:8px;cursor:pointer;line-height:1.35}
+.chk input{flex:0 0 auto;width:22px;height:22px;margin:1px 0 0;accent-color:var(--accent)}
+.chk i{font-style:normal;font-weight:700;color:var(--muted);margin-right:4px}
+.chk.none{background:var(--soft);font-weight:600;margin-top:2px}
+.chk.on{border-color:var(--accent)}
+.mdet{margin:-2px 0 6px;padding:12px;border:1.5px solid var(--accent);border-top:0;border-radius:0 0 8px 8px;background:var(--soft)}
+.mdet .grid{margin-top:0}
+.hint{grid-column:1/-1;font-size:14px;color:var(--muted)}
+.med>.hdr{font-size:14px;color:var(--muted);margin:0 0 8px}
+.bottom{position:fixed;left:0;right:0;bottom:0;z-index:9;background:var(--surface);border-top:1px solid var(--line);padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.bottom .in{max-width:680px;margin:0 auto;display:flex;gap:10px}
+.btn{flex:1 1 0;min-height:50px;padding:0 18px;border-radius:10px;border:1.5px solid var(--accent);background:var(--accent);color:var(--accent-ink);font:600 17px var(--body);cursor:pointer}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn.sm{flex:0 0 auto;min-height:44px;font-size:16px}
+.hero{padding-top:28px;padding-bottom:130px}
+.hero h1{font-size:44px;text-transform:uppercase}
+.hero .sub{margin:10px 0 0;color:var(--muted);font-size:18px;max-width:46ch}
+.hero .note{margin-top:18px}
+.hero h3{font-size:22px;margin:24px 0 8px}
+.hero ul{margin:0;padding-left:20px}
+.hero li{margin:6px 0}
+.doc{margin-top:16px;padding:16px;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.dh h1{font-size:30px;text-transform:uppercase}
+.dh div{color:var(--muted);margin-top:4px}
+.ds{margin-top:22px}
+.ds h3,.dflag h3,.ddocs h3{font-size:22px;text-transform:uppercase;border-bottom:2px solid var(--accent);padding-bottom:4px;margin-bottom:6px}
+.sg{margin:10px 0 0;padding:8px 10px;border:1px solid var(--line);border-radius:8px}
+.sgt{font-weight:700;font-size:15px;margin-bottom:2px}
+.r{display:grid;grid-template-columns:minmax(0,1fr);gap:0;padding:6px 0;border-bottom:1px solid var(--line);font-size:15px}
+@media (min-width:520px){.r{grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:12px}}
+.rl{color:var(--muted)}
+.rv{font-weight:600;white-space:pre-wrap;overflow-wrap:anywhere}
+.r.yes{background:var(--yes-bg);padding-left:8px;border-left:4px solid var(--yes-line)}
+.mi{padding:6px 0;border-bottom:1px solid var(--line);font-size:15px}
+.mi .det{color:var(--muted);margin-top:2px;overflow-wrap:anywhere}
+.none2{color:var(--muted);font-size:14px;padding:4px 0}
+.dflag .fl{padding:6px 0;border-bottom:1px solid var(--line);font-size:15px}
+.dflag .fs{font-weight:700;margin-top:10px}
+.fl .det{color:var(--muted);overflow-wrap:anywhere}
+.ddocs ul{margin:6px 0 0;padding-left:20px}
+.ddocs li{margin:4px 0}
+.acts{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.acts .btn{flex:1 1 200px}
+textarea.cp{min-height:220px;margin-top:12px;font:14px/1.4 ui-monospace,Menlo,Consolas,monospace}
+@media print{
+body{background:#fff;color:#000;font-size:11pt}
+body::before,.top,.bottom,.noprint{display:none!important}
+main{padding:0}
+.wrap{max-width:none;padding:0}
+.doc{border:0;padding:0;margin:0}
+.sg,.r,.mi,.fl{break-inside:avoid}
+.ds h3{break-after:avoid}
+.r.yes{background:#fff3df}
+}
+@page{margin:14mm}
+
+.toprow .tt2{display:flex;gap:10px;align-items:baseline;min-width:0;flex:1 1 auto}
+.toprow #tl{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.toprow #tt{white-space:nowrap}
+.lnk{flex:0 0 auto;min-height:36px;padding:0 12px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);border-radius:8px;font:600 14px var(--body);cursor:pointer}
+.sheet{position:fixed;inset:0;z-index:30;background:rgba(10,16,13,.55);display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.sheet .box{width:100%;max-width:560px;margin:auto 0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;display:grid;gap:14px}
+.sheet h2{font-size:28px;text-transform:uppercase}
+.sheet p{margin:0;color:var(--muted)}
+.sheet .f label{display:block;font-weight:600;font-size:15px;margin:0 0 6px}
+.sheet textarea{min-height:140px;font:13px/1.35 ui-monospace,Menlo,Consolas,monospace;word-break:break-all}
+.sheet .acts{margin-top:0}
+.rsm{margin-top:24px;padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--surface);display:grid;gap:12px}
+.rsm h3{font-size:22px;margin:0}
+.rsm p{margin:0;color:var(--muted)}
+.rsm textarea{min-height:96px;font:13px/1.35 ui-monospace,Menlo,Consolas,monospace;word-break:break-all}
+
+.dhint{font-size:13px;color:var(--muted);margin-top:4px}
+input.bad{border-color:var(--err)!important}
+</style></head><body><div class="top noprint"><div class="wrap"><div class="toprow"><div class="tt2"><span id="tt"></span><b id="tl"></b></div><button type="button" class="lnk" id="savebtn" hidden>Save progress</button></div><div class="bar" aria-hidden="true"><div class="fill" id="fill"></div></div></div></div>
+<main id="main"></main>
+<div class="sheet noprint" id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheettitle"><div class="box">
+<h2 id="sheettitle">Save your progress</h2>
+<p>This progress code holds everything you have entered so far. Copy it and keep it somewhere only you can reach, such as your notes app or an email to yourself. Next time, open this form, paste the code under "Already started?" and tap Resume.</p>
+<div class="note warn"><p><b>Keep the code private.</b> It is not locked. Anyone who has it can read your answers, including your Social Security number. Delete it once you have finished the application.</p></div>
+<textarea id="savecode" readonly spellcheck="false"></textarea>
+<div class="acts"><button type="button" class="btn" id="cpcode">Copy code</button><button type="button" class="btn ghost" id="sheetclose2">Done</button></div>
+<div id="savemsg" class="em" role="status"></div>
+</div></div>
+<div class="bottom noprint"><div class="in"><button type="button" class="btn ghost" id="back" hidden>Back</button><button type="button" class="btn" id="next">Start</button></div></div><script>const STANDALONE=true;
+/* ---------- form definition helpers ---------- */
+const STATES=['AL','AK','AZ','AR','CA','CO','CT','DE','DC','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY','PR','GU','VI','AS','MP'];
+const RELS=['Mother','Father','Stepmother','Stepfather','Foster parent','Child (including adopted/foster)','Stepchild','Brother','Sister','Stepbrother','Stepsister','Half-brother','Half-sister','Father-in-law','Mother-in-law','Guardian'];
+let _g=0;
+const ex=(a,b)=>Object.assign(a,b);
+const T=(id,label,o)=>ex({t:'text',id,label},o);
+const D=(id,label,o)=>ex({t:'date',id,label,w:'l'},o);
+const SEL=(id,label,opts,o)=>ex({t:'select',id,label,opts},o);
+const ST_=(id,label,o)=>SEL(id,label||'State',STATES,ex({w:'s'},o));
+const Y=(id,label,o)=>ex({t:'yn',id,label},o);
+const TA=(id,label,o)=>ex({t:'area',id,label},o);
+const YD=(id,label,o)=>ex({t:'yn',id,label,then:[TA(id+'_d','Details (optional)')]},o);
+const R=(id,label,opts,o)=>ex({t:'radio',id,label,opts},o);
+const C=(id,label,opts,o)=>ex({t:'checks',id,label,opts},o);
+const N=(html,o)=>ex({t:'note',id:'n'+(_g++),html},o);
+const G=(title,items,o)=>ex({t:'group',id:'g'+(_g++),title,items},o);
+const RP=(id,title,items,o)=>ex({t:'repeat',id,title,items},o);
+const CALC=(id,label,get,o)=>ex({t:'calc',id,label,get},o);
+const nm=(p,o)=>[T(p+'f','First name',ex({w:'m'},o)),T(p+'m','Middle',{w:'m'}),T(p+'l','Last name',ex({w:'m'},o))];
+const addr=(p,o)=>[T(p+'st','Street address',{ac:'address-line1'}),T(p+'city','City',{w:'l'}),ST_(p+'state'),T(p+'zip','ZIP code',{w:'s',mode:'numeric',max:10}),...((o&&o.noCounty)?[]:[T(p+'cty','County',{w:'l'})])];
+const fmtAddr=(A,p)=>[A[p+'st'],A[p+'city'],A[p+'state'],A[p+'zip']].filter(Boolean).join(', ');
+/* Questions that are lists of yes/no items: [text, short summary label (optional), tag (optional)] */
+const QL=(pre,list,o)=>list.map((q,i)=>{const a=Array.isArray(q)?q:[q];return YD(pre+(i+1),a[0],ex({s:a[1]||undefined,tag:a[2]||undefined},o));});
+const STEPS=[];
+
+/* ---------- shared state and date helpers ---------- */
+const ST={step:'welcome',A:{},err:false,dirty:false};
+const dt=s=>(s&&/^\d{4}-\d{2}-\d{2}$/.test(s))?new Date(s+'T00:00:00'):null;
+const fd=s=>(s&&/^\d{4}-\d{2}-\d{2}$/.test(s))?s.slice(5,7)+'/'+s.slice(8,10)+'/'+s.slice(0,4):(s||'');
+const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const ageOf=s=>{const b=dt(s);if(!b)return'';const n=new Date();let a=n.getFullYear()-b.getFullYear();if(n.getMonth()<b.getMonth()||(n.getMonth()===b.getMonth()&&n.getDate()<b.getDate()))a--;return a>=0&&a<120?String(a):'';};
+const DAY=86400000;
+function gaps(arr,startOf,endOf,what){
+  const now=new Date();let cut=new Date(now.getFullYear()-10,now.getMonth(),now.getDate());
+  const b=dt(ST.A.dob);if(b){const s16=new Date(b.getFullYear()+16,b.getMonth(),b.getDate());if(s16>cut)cut=s16;}
+  const rows=arr.map((e,i)=>({s:startOf(e,i),e:endOf(e,i)})).filter(r=>r.s&&r.e).sort((x,y)=>x.s-y.s);
+  const m=[];if(!rows.length)return'';
+  if(rows[0].s-cut>31*DAY)m.push('Your '+what+' should go back to '+fd(iso(cut))+' (10 years ago, or your 16th birthday if later). The earliest date you entered is '+fd(iso(rows[0].s))+'.');
+  let maxEnd=rows[0].e;
+  for(let i=1;i<rows.length;i++){if(rows[i].s-maxEnd>31*DAY)m.push('Possible gap between '+fd(iso(maxEnd))+' and '+fd(iso(rows[i].s))+'.');if(rows[i].e>maxEnd)maxEnd=rows[i].e;}
+  if(!m.length)return'';
+  return '<div class="note warn"><p><b>Check your dates.</b> There should be no gaps.</p>'+m.slice(0,4).map(x=>'<p>'+x+'</p>').join('')+'</div>';
+}
+function dupRefs(arr){
+  const seen={},d=[];arr.forEach(e=>{const n=((e.rff||'')+' '+(e.rfl||'')).trim().toLowerCase();if(!n)return;if(seen[n])d.push(n);seen[n]=1;});
+  return d.length?'<div class="note warn"><p><b>Each reference must be a different person</b> and cannot be a family member. Check your references.</p></div>':'';
+}
+const FORMER=A=>['Divorced','Widowed'].includes(A.mar)||['pm','div','ann','wid'].some(k=>A[k]==='Yes');
+const HASMAR=A=>A.mar&&A.mar!=='Never married';
+
+/* ---------- 1. About you ---------- */
+STEPS.push({id:'you',title:'About you',blurb:'Use your legal name as it appears on your documents.',items:[
+  ...nm('n',{req:true}),
+  T('nsuf','Suffix (Jr., III…)',{w:'s'}),
+  R('sex','Sex',['Male','Female'],{req:true,w:'l'}),
+  T('ssn','Social Security Number',{fmt:'ssn',mode:'numeric',req:true,max:11,w:'l'}),
+  D('dob','Date of birth',{req:true}),
+  CALC('age','Age',A=>ageOf(A.dob),{w:'s'}),
+  G('Place of birth',[T('pobc','City',{w:'l'}),T('pobs','State (or country if born abroad)',{w:'l'}),T('pobcty','County',{w:'l'})]),
+  T('tel','Primary phone',{type:'tel',req:true,ac:'tel',w:'l'}),
+  T('tel2','Secondary phone',{type:'tel',w:'l'}),
+  T('email','Primary email',{type:'email',req:true,ac:'email'}),
+  G('Current address',addr('ad')),
+  G('Description',[T('race','Primary race',{w:'l'}),T('eth','Ethnic category',{w:'l'}),T('relig','Religion',{w:'l'}),T('ht','Height',{w:'s',ph:'5\'10"'}),T('wt','Weight (lb)',{w:'s',mode:'numeric'}),T('eye','Eye color',{w:'s'}),T('hair','Hair color',{w:'s'})]),
+  G('Driver\'s license',[T('dl','License number',{w:'l'}),ST_('dls'),D('dle','Expires',{w:'s'})])
+]});
+
+/* ---------- 2. Quick screening: broad gates that decide which sections appear ---------- */
+STEPS.push({id:'quick',title:'Quick questions',blurb:'A few short questions first. Your answers decide which sections you will see next. Sections that do not apply to you are skipped.',items:[
+  R('cit','Citizenship',['U.S. native born','Born abroad','Immigrant alien'],{req:true,then:v=>v==='Immigrant alien'?[T('alien','Alien #')]:[]}),
+  Y('passport','Do you have a U.S. passport (current or expired)?',{then:[D('ppi','Date issued'),D('ppe','Date expires'),T('ppn','Passport number')]}),
+  Y('dual','Do you now, or have you ever, held dual or multiple citizenships?'),
+  Y('forgate','Have you had any ties to another country in the last 7 years or ever? Examples: close contact with a foreign national, foreign money, property or benefits, work or business with foreign people or groups, a passport from another country, or travel outside the U.S.',{s:'Foreign ties or travel'}),
+  Y('vote','Are you registered to vote?'),
+  Y('lang','Do you speak, read, write or understand a foreign language?',{then:[T('langs','Which language(s)?')]}),
+  Y('prior','Have you ever served in any branch of the U.S. Armed Forces, including the National Guard?',{s:'Prior military service'}),
+  R('mar','Marital status',['Married','Never married','Divorced','Separated','Widowed'],{req:true}),
+  Y('kids','Do you have any children (including adopted or foster children)?',{then:[T('kidages','Children\'s ages (for example: 4, 7, 12)')]}),
+  Y('alias','Have you ever used any other names, including maiden names?',{then:[RP('aliases','Other name',[T('an','Full name used'),D('af','From',{w:'s'}),D('at','To',{w:'s'})],{min:1,max:6,add:'Add another name'})]}),
+  Y('edu10','Have you attended any school in the last 10 years?'),
+  Y('loans','Do you have any student loans?'),
+  Y('ins','Do you want to choose National Guard life insurance coverage?'),
+  Y('tat','Do you have any tattoos?'),
+  Y('gau','Do you wear gauges (stretched piercings)?'),
+  Y('brand','Do you have any brandings?')
+]});
+
+/* ---------- 3. Education ---------- */
+STEPS.push({id:'edu',title:'Education',items:[
+  G('High school and college',[
+    T('hs','High school name'),D('hsg','Graduation date'),T('col','Last college attended'),D('colg','Graduation date (if any)'),
+    T('cred','College credit hours earned',{w:'l',mode:'numeric'}),R('credt','Hours are',['Semester','Quarter'],{w:'l'})]),
+  T('hgrade','Highest grade completed (10–12 = high school, 13–16 = undergraduate, 16–18 = professional)',{mode:'numeric'}),
+  R('hlevel','Highest education level',['GED','HS diploma','Associate','BA/BS','Master\'s','Doctorate'],{w:'l'}),
+  Y('trad','Did you graduate from a traditional high school?'),
+  Y('postsec','Do you have a post-secondary certificate or diploma?'),
+  Y('rotc','Have you ever been enrolled in ROTC, Junior ROTC, Sea Cadets or Civil Air Patrol?',{then:[T('rotcp','Which program?',{w:'l'}),T('rotcy','Years completed',{w:'s',mode:'numeric'})]}),
+  G('Student loans',[
+    T('loanamt','Total amount of federal student loans in your name ($)',{mode:'decimal'}),
+    T('fafu','FAFSA username',{w:'l'}),T('fafp','FAFSA password',{type:'password',w:'l',ac:'off'}),
+    N('<p>You can check the status of your loans at <a href="https://www.nslds.ed.gov/npas/index.htm" target="_blank" rel="noopener">nslds.ed.gov</a>.</p>')
+  ],{show:A=>A.loans==='Yes'}),
+  RP('schools','School',[
+    T('sn','School name'),T('set','Education type (high school, college, trade…)',{w:'l'}),D('sf','From',{w:'s'}),D('st','To',{w:'s'}),
+    Y('sg','Did you graduate?',{opt:true}),T('sdeg','Type of degree or diploma obtained'),T('scr','Credits earned',{w:'s',mode:'numeric'}),D('sgd','Graduation date',{w:'s'}),
+    G('School address',addr('sa',{noCounty:true})),
+    G('Reference at this school',[...nm('sr'),T('sra','Reference street address'),T('srac','City',{w:'l'}),ST_('sras'),T('sraz','ZIP code',{w:'s',mode:'numeric'}),T('srp','Phone',{type:'tel',w:'l'}),T('sre','Email',{type:'email',w:'l'})])
+  ],{show:A=>A.edu10==='Yes',min:1,max:8,title:i=>'School '+(i+1),add:'Add another school'})
+]});
+
+/* ---------- 4. Military service ---------- */
+STEPS.push({id:'mil',title:'Military service',blurb:'You can find these details on your DD Form 214 or NGB Form 22.',show:A=>A.prior==='Yes',items:[
+  RP('svc','Period of service',[
+    T('br','Service branch',{w:'l'}),R('offenl','Officer or enlisted',['Officer','Enlisted'],{w:'l'}),
+    R('sstat','Service status',['Active','Active Reserve','Inactive Reserves']),
+    T('rank','Rank at discharge',{w:'l'}),T('hrank','Highest rank acquired',{w:'l'}),T('pay','Pay grade',{w:'s'}),D('dor','Date of rank',{w:'s'}),
+    D('from','Enlistment / start date',{w:'s'}),D('to','Discharge / end date',{w:'s'}),
+    T('dtype','Discharge type',{w:'l'}),T('nreason','Narrative reason for separation',{w:'l'}),
+    T('spd','Separation (SPD) code',{w:'s'}),T('re','RE code',{w:'s'}),T('mos','MOS / specialty job code',{w:'s'}),
+    T('unit','Unit name'),
+    G('Unit address',[...addr('u',{noCounty:true}),T('uctry','Country',{w:'l'})]),
+    G('Supervisor',[...nm('sup'),T('suprank','Rank',{w:'s'}),T('supph','Phone number',{type:'tel',w:'l'})])
+  ],{min:1,max:4,title:i=>'Period of service '+(i+1),add:'Add another period of service'})
+]});
+
+/* ---------- 5. Family situation ---------- */
+STEPS.push({id:'fam',title:'Family situation',blurb:'Answer each question Yes or No. Details are optional where offered.',items:[
+  Y('pm','Do you have a previous marriage?',{show:HASMAR}),
+  Y('div','Have you ever been divorced?',{show:HASMAR}),
+  Y('sep','Are you legally separated?',{show:HASMAR}),
+  Y('ann','Did you have a marriage annulled?',{show:HASMAR}),
+  Y('wid','Have you been widowed?',{show:HASMAR}),
+  Y('coh','Do you presently reside with a cohabitant?'),
+  Y('dep','Is anyone dependent upon you for financial support?'),
+  Y('cust','Do you have custody of any minor children?',{show:A=>A.kids==='Yes'}),
+  Y('relq','Have you relinquished custody of any child/children?',{show:A=>A.kids==='Yes'}),
+  YD('supp','Is there any court order or judgment in effect that directs you to provide alimony and/or child support?'),
+  YD('rej1','Have you been rejected for military service (temporary or permanent) for medical or other reasons?'),
+  YD('pow','Do you have an immediate relative (father, mother, brother or sister) who: (1) is now a prisoner of war or is missing in action (MIA); or (2) died or became 100% permanently disabled while serving in the Armed Services?',{s:'Immediate relative POW/MIA, or died or 100% disabled in service'}),
+  Y('only','Are you the only living child in your immediate family?'),
+  YD('rej2','Have you ever been rejected for enlistment, reenlistment, or induction by any branch of the Armed Forces of the United States?')
+]});
+
+/* ---------- 6. Spouse and former spouse ---------- */
+STEPS.push({id:'spouse',title:'Spouse',show:A=>A.mar==='Married'||A.mar==='Separated'||FORMER(A),items:[
+  G('Current spouse',[
+    ...nm('sp'),T('spssn','Social Security Number',{fmt:'ssn',mode:'numeric',max:11,w:'l'}),T('spcit','Citizenship',{w:'l'}),
+    D('spdob','Date of birth'),T('spbc','Birth city',{w:'l'}),T('spbs','Birth state',{w:'l'}),T('spbco','Country of birth',{w:'l'}),
+    Y('spmil','Has your spouse ever been in the military?',{opt:true}),
+    D('spmd','Date of marriage'),T('spmc','Marriage city',{w:'l'}),ST_('spms','Marriage state'),T('spmcty','Marriage county',{w:'l'}),
+    T('spmaid','Spouse\'s maiden name',{w:'l'}),D('spmf','Had maiden name from',{w:'s'}),D('spmt','to',{w:'s'})
+  ],{show:A=>A.mar==='Married'||A.mar==='Separated'}),
+  RP('former','Former spouse',[
+    ...nm('fs'),D('fsdob','Date of birth'),T('fscit','Citizenship',{w:'l'}),
+    D('fsmd','Date of marriage'),T('fsmc','Marriage city',{w:'l'}),ST_('fsms','Marriage state'),T('fsmcty','Marriage county',{w:'l'}),
+    T('fsbc','Birth city',{w:'l'}),T('fsbs','Birth state',{w:'l'}),T('fsbco','Country of birth',{w:'l'}),
+    R('fsend','How did the marriage end?',['Divorced','Widowed'],{w:'l'}),D('fsed','Date it ended'),
+    G('Where the divorce records are held',[T('fsrc','City',{w:'l'}),ST_('fsrs'),T('fsrz','ZIP code',{w:'s',mode:'numeric'}),T('fsrcty','County',{w:'l'})],{show:(A,E)=>E.fsend==='Divorced'}),
+    G('Former spouse\'s address',[...addr('fa',{noCounty:true}),T('fph','Phone number',{type:'tel',w:'l'})])
+  ],{show:A=>FORMER(A),min:1,max:4,title:i=>'Former spouse '+(i+1),add:'Add another former spouse'})
+]});
+
+/* ---------- 7. Family and associates ---------- */
+STEPS.push({id:'rel',title:'Family and associates',blurb:'Enter all family members, living or deceased: mother, father, stepmother, stepfather, foster parent, children (including adopted or foster), stepchildren, brothers, sisters, stepbrothers, stepsisters, half-brothers, half-sisters, fathers-in-law, mothers-in-law, and any guardian.',items:[
+  RP('rels','Family member',[
+    SEL('rr','Relationship',RELS,{req:true}),...nm('r'),
+    T('maiden','Mother\'s maiden name',{show:(A,E)=>E.rr==='Mother'}),
+    T('oth','Other names used',{w:'l'}),D('othf','Used from',{w:'s'}),D('otht','to',{w:'s'}),
+    D('rdob','Date of birth'),Y('dec','Deceased?',{opt:true}),
+    G('Current address',addr('ra',{noCounty:true}),{show:(A,E)=>E.dec!=='Yes'}),
+    T('rph','Phone number',{type:'tel',show:(A,E)=>E.dec!=='Yes'}),
+    T('rbc','Birth city',{w:'l'}),T('rbs','Birth state',{w:'l'}),T('rcit','Citizenship',{w:'l'}),T('rcob','Country of birth',{w:'l'})
+  ],{min:1,max:15,title:(i,e)=>'Family member '+(i+1)+(e&&e.rr?' ('+e.rr+')':''),add:'Add another family member'})
+]});
+
+/* ---------- 8. Residences ---------- */
+STEPS.push({id:'res',title:'Residences',blurb:'Go back 10 years or to your 16th birthday, whichever is later. Each address needs a reference. You cannot repeat a reference anywhere in this application or use family members. Neighbors, friends, or parents of friends work. There can be no gaps in dates from one residence to the next.',items:[
+  RP('resid','Residence',[
+    CALC('curaddr','Address',A=>fmtAddr(A,'ad')+' (from the first section)',{show:(A,E,i)=>i===0}),
+    G('Address',addr('r'),{show:(A,E,i)=>i>0}),
+    R('ten','Rent, own or other',['Rent','Own','Other'],{w:'l'}),T('tenoth','Other (explain)',{w:'l',show:(A,E)=>E.ten==='Other'}),
+    D('din','Date moved in',{rr:true,w:'s'}),D('dout','Date moved out',{rr:true,w:'s',show:(A,E,i)=>i>0}),
+    G('Reference for this address',[...nm('rf'),T('rfrel','Relationship',{w:'l'}),T('rfph','Phone number',{type:'tel',w:'l'}),...addr('rfa')])
+  ],{min:1,max:12,title:i=>i===0?'Current address':'Former address '+i,add:'Add a former address',
+     after:arr=>gaps(arr,e=>dt(e.din),(e,i)=>i===0?new Date():dt(e.dout),'residence history')+dupRefs(arr)})
+]});
+
+/* ---------- 9. Employment ---------- */
+STEPS.push({id:'jobs',title:'Employment history',blurb:'Go back 10 years or to your 16th birthday, whichever is later. Start with your current or most recent job. Time you did not work counts as unemployed, even if you were a student. There can be no gaps.',items:[
+  RP('jobs','Job or period',[
+    R('est','During this period you were',['Employed','Unemployed (including student)'],{req:true}),
+    T('emp','Employer',{show:(A,E)=>E.est==='Employed'}),
+    D('js','Date started',{rr:true,w:'s'}),D('je','Date left or ended',{rr:true,w:'s',show:(A,E)=>E.cur!=='Yes'}),
+    Y('cur','Do you still work here?',{opt:true,show:(A,E)=>E.est==='Employed'}),
+    T('pos','Position title',{w:'l',show:(A,E)=>E.est==='Employed'}),T('resp','Position responsibilities',{w:'l',show:(A,E)=>E.est==='Employed'}),
+    R('ft','Full time or part time',['Full time','Part time'],{w:'l',show:(A,E)=>E.est==='Employed'}),T('hrs','Weekly hours worked',{w:'l',mode:'numeric',show:(A,E)=>E.est==='Employed'}),
+    G('Supervisor',[...nm('sv'),T('svp','Position',{w:'l'})],{show:(A,E)=>E.est==='Employed'}),
+    G('Employer address',addr('ea'),{show:(A,E)=>E.est==='Employed'}),
+    T('eph','Employer phone number',{type:'tel',show:(A,E)=>E.est==='Employed'}),
+    T('rfl2','Reason for leaving',{show:(A,E)=>E.est==='Employed'&&E.cur!=='Yes'})
+  ],{min:1,max:12,title:i=>i===0?'Current or most recent':'Earlier period '+i,add:'Add an earlier job or period',
+     after:arr=>gaps(arr,e=>dt(e.js),e=>e.cur==='Yes'?new Date():dt(e.je),'employment history')})
+]});
+
+/* ---------- 10. Insurance and bank ---------- */
+STEPS.push({id:'pay',title:'Insurance and bank',items:[
+  G('Life insurance',[
+    N('<p>Life insurance is offered through the National Guard. Pick one coverage amount, at least one primary and one secondary beneficiary. Choose someone from your family. Monthly payments are in parentheses.</p>'),
+    R('cov','Coverage amount',['$50,000 ($4.50)','$100,000 ($8.00)','$150,000 ($11.50)','$200,000 ($15.00)','$250,000 ($18.50)','$300,000 ($22.00)','$350,000 ($25.50)','$400,000 ($29.00)'],{req:true}),
+    G('Primary beneficiary',[...nm('pb',{req:true}),T('pbph','Phone number',{type:'tel'})]),
+    G('Secondary beneficiary',[...nm('sb',{req:true}),T('sbph','Phone number',{type:'tel'})])
+  ],{show:A=>A.ins==='Yes'}),
+  G('Bank information',[T('bank','Bank name'),T('bankad','Bank address'),T('acct','Account number',{mode:'numeric',w:'l'}),T('rout','Routing number',{mode:'numeric',w:'l'})])
+]});
+
+/* ---------- Medical history: grouped checklists, "None of these apply" per group ---------- */
+const MG=(name,items,o)=>ex({name,items:items.map(x=>({n:x[0],q:x[1],help:x[2]||''})) },o);
+const HELP988='If you are having thoughts of hurting yourself, you can call or text 988 (Suicide & Crisis Lifeline) at any time. You can also tell your recruiter.';
+const MED_A=[
+MG('Eyes',[[1,'Double vision'],[2,'Detached retina or surgery to repair a detached retina'],[3,'Cataracts or surgery for cataracts'],[4,'Eye surgery to improve vision (RK, PRK, LASIK, etc.)'],[5,'Night blindness'],[6,'Glaucoma'],[7,'Strabismus or "lazy eye" or any surgery to correct these'],[8,'Any other eye condition, injury or surgery']]),
+MG('Vision',[[9,'Worn/wear contact lenses or glasses (bring your contact lens kit and solution so you can remove contacts during vision testing, or for best results remove them 72 hours prior; bring your eyeglasses no matter how old they are)'],[10,'Loss of vision in either eye'],[11,'Color vision deficiency or color blindness']]),
+MG('Ears and hearing',[[12,'Perforated ear drum or tubes in ear drum(s)'],[13,'Ear surgery, to include mastoidectomy or repair of perforated ear drum'],[14,'Loss of balance or vertigo'],[15,'Hearing loss or wear a hearing aid']]),
+MG('Nose, sinuses, mouth and larynx',[[16,'Ear, nose, or throat trouble including tonsillectomy'],[17,'Chronic sinus infections or recurrent nose bleeds'],[18,'Absence of, or disturbance of sense of smell'],[19,'Any surgery of your face, mandible or jaw']]),
+MG('Dental',[[20,'Do you wear dental braces or plan to wear braces? If so, your orthodontist must submit a letter stating that active orthodontic treatment will be completed prior to active duty date (release form and sample format are in the Recruiter\'s Medical Guide).'],[21,'Tooth or gum problems (other than cavities)']])
+];
+const MED_B=[
+MG('Lungs, chest wall, pleura and mediastinum',[[22,'Asthma'],[23,'Wheezing'],[24,'Shortness of breath'],[25,'Bronchitis'],[26,'Other breathing problems worsened by exercise, weather, pollens, etc.'],[27,'Used inhaler(s) or steroids for breathing problem(s)'],[28,'Chronic cough or frequent coughing at night'],[29,'Collapsed lung or other lung condition'],[30,'History of chest, chest wall, or breast surgery']]),
+MG('Heart',[[31,'Heart murmur, valve problem or mitral valve prolapse'],[32,'Palpitation, pounding heart or abnormal heartbeat'],[33,'Heart surgery'],[34,'Pain or pressure in the chest'],[35,'An abnormal electrocardiogram (EKG)'],[36,'Any other heart problems']]),
+MG('Abdominal organs and digestive system',[[37,'Stomach, esophageal or intestinal ulcer'],[38,'Difficulty swallowing'],[39,'Frequent indigestion or heartburn'],[40,'Gall bladder trouble or gallstones'],[41,'Jaundice (except neonatal) or hepatitis (liver disease)'],[42,'Rupture/hernia'],[43,'Surgery to remove or repair a portion of the intestine or spleen (other than the appendix)'],[44,'Chronic or recurrent intestinal problem of the small or large bowel such as Irritable Bowel Syndrome, Crohn\'s disease, Ulcerative Colitis, or Celiac disease'],[45,'Rectal disease, hemorrhoids, or blood from the rectum'],[46,'Hemorrhoid surgery'],[47,'Bariatric surgery (weight loss surgery)']]),
+MG('Urinary system',[[60,'Missing a kidney'],[61,'Kidney stone, infection or disease'],[62,'Kidney or urinary tract surgery of any kind'],[63,'Blood or protein in urine'],[64,'Painful or difficult urination'],[65,'Bedwetting or treatment for bedwetting (after childhood)'],[66,'Hernia']]),
+MG('Female health',[[48,'A change of menstrual pattern (other than pregnancy)'],[49,'Pregnancy, abortion or miscarriage'],[50,'Any abnormal PAP smear(s)'],[51,'Date of last PAP smear (enter the date in the details)'],[52,'Diagnosed with endometriosis or ovarian cysts'],[53,'Evaluation, treatment or surgery for any other gynecological (female) disorder'],[54,'Sexually transmitted disease (syphilis, gonorrhea, chlamydia, genital warts, herpes, etc.)'],[55,'First day of last menstrual period (enter the date in the details)']],{only:'Female'}),
+MG('Male health',[[56,'Missing a testicle, testicular implant, or undescended testicle'],[57,'Varicocele, hydrocele, or any scrotal mass, swelling or pain'],[58,'Prostate problems'],[59,'Sexually transmitted disease (syphilis, gonorrhea, chlamydia, genital warts, herpes, etc.)']],{only:'Male'})
+];
+const MED_C=[
+MG('Spine and sacroiliac joints',[[67,'Recurrent back pain or back problem'],[68,'Herniated disk'],[69,'Recurrent neck pain'],[70,'Back or neck surgery'],[71,'Abnormal curvature of your spine (any part)']]),
+MG('Arms and shoulders',[[72,'Painful shoulder, elbow, wrist, hand or fingers'],[73,'Dislocated shoulder, elbow, wrist, hand or fingers']]),
+MG('Legs and feet',[[74,'Foot trouble (for example pain, corns, bunions, warts, ingrown toenails)'],[75,'Knee trouble (for example locking, giving out, or ligament injury)'],[76,'Painful hip, knee, ankle, foot or toes'],[77,'Dislocated hip, knee, ankle, foot or toes']]),
+MG('Other conditions of the arms and legs',[[78,'Bone, joint, or other orthopedic deformity'],[79,'Loss of finger or toe, or extra finger or toe'],[80,'Loss of the ability to fully flex (bend) or fully extend a finger, toe, or other joint'],[81,'Impaired use of arms, hands, legs, or feet (any reason)'],[82,'Arthritis, rheumatism, or bursitis'],[83,'Any swollen joint(s)'],[84,'Surgery on any joint or bone (including arthroscopy)'],[85,'Plate(s), screw(s), rod(s) or pin(s) in any bone'],[86,'Pain or swelling at the site of an old fracture'],[87,'Any need to use corrective devices such as prosthetic devices, knee brace(s), back support(s), lifts or orthotics'],[88,'Any other orthopedic, muscle, or sports injury problems']]),
+MG('Blood pressure and circulation',[[89,'High or low blood pressure'],[90,'Raynaud\'s phenomenon or disease'],[91,'Deep vein thrombosis (blood clot; leg or elsewhere)'],[92,'Pulmonary embolism (blood clot in lung)']])
+];
+const MED_D=[
+MG('Skin',[[93,'Acne or psoriasis'],[94,'Eczema'],[95,'Atopic dermatitis'],[96,'Large or painful scars'],[97,'Any other skin problems']]),
+MG('Blood and blood forming tissues',[[98,'Anemia'],[99,'Blood clots requiring blood thinner medicine'],[100,'Absence or removal of the spleen'],[101,'Prolonged bleeding (after an injury or tooth extraction)'],[102,'Any other blood or circulation problems']]),
+MG('Allergies, infections and immune system',[[103,'Adverse reaction to medication (describe the reaction)'],[104,'Adverse reaction to serum, insect stings, or tree nuts'],[105,'Allergy to common foods (milk, eggs, fish, meat, etc.)'],[106,'Allergy to wool, latex, or other material'],[107,'Tuberculosis or lived with someone who had tuberculosis'],[108,'Positive test for tuberculosis (PPD or blood test)'],[109,'Malaria'],[110,'Disorder(s) of your immune system (including HIV)'],[111,'Car, train, sea, or air sickness']]),
+MG('Hormones and metabolism',[[112,'Thyroid trouble or goiter'],[113,'High or low blood sugar'],[114,'Diabetes or told that you should be tested for diabetes']]),
+MG('Nervous system and head',[[115,'Cerebrovascular incident (stroke)'],[116,'Frequent or severe headaches, including migraines'],[117,'Taking medication to prevent headaches'],[118,'Lost time from work or school due to frequent or severe headaches'],[119,'A skull fracture'],[120,'A head injury, memory loss, or amnesia'],[121,'A period of unconsciousness or concussion'],[122,'Loss of memory or amnesia, or neurological symptoms'],[123,'Paralysis'],[124,'Meningitis, encephalitis, or other neurological problems'],[125,'Seizures, convulsions, epilepsy or fits'],[126,'Dizziness or fainting spells'],[127,'Any other neurologic problems']]),
+MG('Sleep',[[128,'Sleepwalking or narcolepsy'],[129,'Frequent trouble sleeping'],[130,'Sleep apnea or severe snoring']])
+];
+const MED_E=[
+MG('Learning, mental health and behavior',[[131,'Evaluated or treated for Attention Deficit Disorder (ADD) or Attention Deficit Hyperactivity Disorder (ADHD)'],[132,'Taken (or taking) medication, drugs, or any substance to improve attention, behavior, or physical performance'],[133,'Diagnosed with a learning disorder, to include dyslexia'],[134,'Received counseling of any type'],[135,'Seen a psychiatrist, psychologist, social worker, counselor or other professional for any reason (inpatient or out-patient), including counseling or treatment for school, adjustment, family, marriage, divorce, depression, anxiety, or treatment of alcohol, drug or substance abuse. Records from providers marked "CONFIDENTIAL: MEPS MEDICAL DEPARTMENT" go directly to MEPS medical personnel.'],[136,'Been expelled or suspended from school'],[137,'Been kicked out or removed from your home'],[138,'Been arrested or other encounters with law enforcement'],[139,'Been evaluated or treated, either with medication or counseling, for a mental condition, depression or excessive worry'],[140,'Nervous trouble of any sort (anxiety or panic attacks)'],[141,'Anorexia, bulimia, or other eating disorder'],[142,'Habitual stammering or stuttering'],[143,'Have you ever purposely cut or harmed yourself?',HELP988],[144,'Have you ever attempted or considered suicide?',HELP988],[145,'Used illegal drugs or abused prescription drugs'],[146,'Been evaluated, treated, or hospitalized for substance abuse, addiction or dependence (including illegal drugs, prescription medications or other substances)'],[147,'Been evaluated, treated, or hospitalized for alcohol abuse, dependence, or addiction'],[148,'Post-traumatic Stress Disorder or excessive stress requiring counseling and/or medication following a traumatic experience'],[149,'Any other learning, psychiatric, or behavioral problems']]),
+MG('Tumors and cancer',[[150,'Tumor, growth, cyst, or cancer of any type']]),
+MG('Heat and cold',[[151,'Cold injury, frostbite or cold intolerance'],[152,'Heat injury, heat stroke or heat intolerance']])
+];
+const MED_F=[
+MG('Medications, hospital stays and surgery',[[153,'Are you taking any medications, including over-the-counter medications (OTCs), vitamin, herbal, or nutritional supplements? (List all in the details.)'],[154,'Any recent unexplained gain or loss of weight'],[155,'Artificial or replacement body part (eye, bone, palate, hip, knee, joint, leg, arm, etc.)'],[156,'Have you ever had any illness or injury other than those already noted? (Say when, where, and give details.)'],[157,'Have you ever been treated in an Emergency Room? (Explain.)'],[158,'Have you ever been a patient in any type of hospital (including being kept overnight)? (Say when, where, why, the name of the doctor and the complete address of the hospital.)'],[159,'Have you ever had, or have you been advised to have any operations or surgery? (Describe, and give the age at which it occurred.)']]),
+MG('Military, work and benefits history',[[160,'Have you ever been rejected for military service for any reason? (Give the date and reason.)'],[161,'Have you ever been discharged from the military service for any reason? (Give the date, reason, and type of discharge, whether honorable, other than honorable, for unfitness or unsuitability.)'],[162,'Have you ever been refused employment or been unable to hold a job or stay in school because of any of the following? (Check the specific reasons below, and give reasons in the details.)'],['162a','Sensitivity to chemicals, dust, sunlight, etc.'],['162b','Inability to perform certain motions'],['162c','Inability to stand, sit, kneel, lie down, etc.'],['162d','Other medical reasons'],[163,'Applied for and/or received a disability evaluation and/or compensation for an injury or other medical conditions (Provide details.)'],[164,'Have you ever been denied life insurance? (Provide the reason(s).)']])
+];
+const MEDSTEPS=[
+ ['med1','Medical: eyes, ears, nose, teeth',MED_A],
+ ['med2','Medical: chest, stomach and urinary',MED_B],
+ ['med3','Medical: bones, joints and circulation',MED_C],
+ ['med4','Medical: skin, blood, nerves and sleep',MED_D],
+ ['med5','Medical: mental health and other',MED_E],
+ ['med6','Medical: history and benefits',MED_F]
+];
+const MEDBLURB='Be honest. For each group below, tap "None of these apply" or tap everything that has ever applied to you. For each one you tap, give as much detail as you can: dates, doctor and hospital names, what happened. Hospital visits will need medical records, which you can ask your doctor or hospital for.';
+MEDSTEPS.forEach(m=>STEPS.push({id:m[0],title:m[1],blurb:MEDBLURB,med:m[2],items:[]}));
+const MEDALL=[].concat(...MEDSTEPS.map(m=>m[2].map((g,gi)=>({step:m[0],gi,g}))));
+
+/* ---------- Alcohol ---------- */
+STEPS.push({id:'alc',title:'Alcohol',items:[
+  R('alc1','How often do you have a drink containing alcohol?',['Never','Monthly or less','2–4 times monthly','2–3 times a week','4 or more times a week'],{req:true,sw:true}),
+  R('alc2','How many drinks containing alcohol do you have on a typical day?',['1–2','3–4','5–6','7–9','10 or more'],{req:true,sw:true,show:A=>A.alc1&&A.alc1!=='Never'}),
+  R('alc3','How often do you have 6 or more drinks on one occasion?',['Never','Less than monthly','Monthly','2–3 times a week','Daily or almost daily'],{req:true,sw:true,show:A=>A.alc1&&A.alc1!=='Never'})
+]});
+
+/* ---------- Moral screening ---------- */
+const SEC='Security clearance question';
+const anyLaw=A=>['m1','m2','m3','m4'].some(k=>A[k]==='Yes');
+STEPS.push({id:'moral',title:'Legal, alcohol and drug history',blurb:'Answer every question. If you answer Yes to the first four, you will be asked for details on each offense. Details are optional on the others.',items:[
+  Y('m1','<b>Have any of the following happened?</b><ul><li>In the past <b>seven (7) years</b>, have you been issued a summons, citation, or ticket to appear in court in a criminal proceeding against you? (Do not check if all the citations involved traffic infractions where the fine was less than $300 and did not include alcohol or drugs.)</li><li>In the past <b>seven (7) years</b>, have you been arrested by any police officer, sheriff, marshal or any other type of law enforcement official?</li><li>In the past <b>seven (7) years</b>, have you been charged, convicted, or sentenced of a crime in any court? (Include all qualifying charges, convictions or sentences in any federal, state, local, military, or non-U.S. court, even if previously listed on this form.)</li><li>In the past <b>seven (7) years</b>, have you been or are you currently on probation or parole?</li><li>Are you currently on trial or awaiting a trial on criminal charges?</li></ul>',{h:1,s:'Court, arrest, charge or probation in last 7 years, or pending trial',tag:SEC}),
+  Y('m2','<b>Other than those offenses already listed, have you EVER had the following happen to you?</b><ul><li>Have you EVER been convicted in any court of the United States of a crime, sentenced to imprisonment for a term exceeding 1 year for that crime, and incarcerated as a result of that sentence for not less than 1 year? (Include all qualifying convictions in federal, state, local, or military court, even if previously listed on this form.)</li><li>Have you EVER been charged with any felony offense? (Include those under the Uniform Code of Military Justice and nonmilitary/civilian felony offenses.)</li><li>Have you EVER been convicted of an offense involving domestic violence or a crime of violence (such as battery or assault) against your child, dependent, cohabitant, spouse, former spouse, or someone with whom you share a child in common?</li><li>Have you EVER been charged with an offense involving firearms or explosives?</li><li>Have you EVER been charged with an offense involving alcohol or drugs?</li></ul>',{h:1,s:'Felony, long sentence, domestic violence, firearms/explosives, or alcohol/drug charge (ever)',tag:SEC}),
+  Y('m3','<b>Other than those offenses already listed, have any of the following happened?</b><ul><li>Have you EVER been issued a summons, citation, or ticket to appear in court in a proceeding against you? (Include all traffic infractions regardless of the fine amount.)</li><li>Have you EVER been arrested by any police officer, sheriff, marshal or any other type of law enforcement official?</li><li>Have you EVER been charged, convicted, or sentenced of a crime in any court? (Include all qualifying charges, convictions or sentences in any federal, state, local, military, or non-U.S. court, even if previously listed on this form.)</li><li>Have you EVER been or are you currently on probation or parole?</li></ul>',{h:1,s:'Any summons, ticket, arrest, charge or probation (ever, including traffic)',tag:SEC}),
+  Y('m4','Is there currently a domestic violence protective order or restraining order issued against you?',{s:'Current protective or restraining order against you',tag:SEC}),
+  RP('offs','Ticket, charge or offense',[
+    D('od','Date of offense',{w:'s'}),T('och','Charge',{w:'l'}),T('odi','Disposition',{w:'l'}),T('ofi','Fine amount ($)',{w:'s',mode:'decimal'}),
+    T('odep','Ticket or arresting department'),G('Department location',[T('odc','City',{w:'l'}),T('odco','County',{w:'l'}),ST_('ods')]),
+    T('ocrt','Court where the case was overseen'),T('ocra','Court address'),G('Court location',[T('occ','City',{w:'l'}),T('occo','County',{w:'l'}),ST_('ocs')]),
+    TA('oex','Explain what happened')
+  ],{show:A=>anyLaw(A),min:1,max:20,title:i=>'Offense '+(i+1),add:'Add another offense or ticket'}),
+  YD('m5','In the <b>last seven (7) years</b>, have you consulted with a health care professional regarding an emotional or mental health condition or were you hospitalized for such a condition? Answer <b>No</b> if the counseling was strictly marital, family, grief not related to violence by you, or strictly related to adjustments from service in a military combat environment. Victims of sexual assault who have consulted a health care professional regarding an emotional or mental health condition during this period strictly in relation to the sexual assault should answer <b>No</b>.',{h:1,s:'Mental health care or hospitalization in last 7 years',tag:SEC}),
+  YD('m6','In the <b>last ten (10) years</b>, have you been a party to any public record civil court action not listed elsewhere on this form?',{h:1,s:'Civil court action in last 10 years',tag:SEC}),
+  YD('m7','Has your use of alcoholic beverages (such as liquor, beer, wine) resulted in any alcohol-related treatment or counseling (such as for alcohol abuse or alcoholism)?',{s:'Alcohol-related treatment or counseling',tag:SEC}),
+  YD('m8','In the <b>last seven (7) years</b>, has your use of alcohol had a negative impact on your work performance, your professional or personal relationships, your finances, or resulted in intervention by law enforcement/public safety personnel?',{h:1,s:'Alcohol harmed work, relationships, finances or led to police contact (7 years)',tag:SEC}),
+  YD('m9','Have you <b>EVER</b> been ordered, advised, or asked to seek counseling or treatment as a result of your use of alcohol?',{h:1,s:'Ordered or advised to seek alcohol counseling (ever)',tag:SEC}),
+  YD('m10','Have you <b>EVER</b> voluntarily sought counseling or treatment as a result of your use of alcohol?',{h:1,s:'Voluntarily sought alcohol counseling (ever)',tag:SEC}),
+  YD('m11','Have you <b>EVER</b> received counseling or treatment as a result of your use of alcohol in addition to what you have already listed on this form?',{h:1,s:'Other alcohol counseling or treatment (ever)',tag:SEC}),
+  YD('m12','In the <b>last seven (7) years</b>, have you illegally used any drugs or controlled substances? Use includes injecting, snorting, inhaling, swallowing, experimenting with or otherwise consuming any drug or controlled substance.',{h:1,s:'Illegal drug use in last 7 years',tag:SEC}),
+  YD('m13','In the <b>last seven (7) years</b>, have you been involved in the illegal purchase, manufacture, cultivation, trafficking, production, transfer, shipping, receiving, handling or sale of any drug or controlled substance?',{h:1,s:'Illegal drug purchase, sale or manufacture in last 7 years',tag:SEC}),
+  YD('m14','Have you <b>EVER</b> illegally used or otherwise been involved with a drug or controlled substance while possessing a security clearance other than previously listed?',{h:1,s:'Drug involvement while holding a clearance',tag:SEC}),
+  YD('m15','Have you <b>EVER</b> illegally used or otherwise been involved with a drug or controlled substance while employed as a law enforcement officer, prosecutor, or courtroom official, or while in a position directly and immediately affecting the public safety other than previously listed?',{h:1,s:'Drug involvement in a law enforcement or public safety role',tag:SEC}),
+  YD('m16','In the <b>last seven (7) years</b> have you intentionally engaged in the misuse of prescription drugs, regardless of whether or not the drugs were prescribed for you or someone else?',{h:1,s:'Prescription drug misuse in last 7 years',tag:SEC}),
+  YD('m17','Have you <b>EVER</b> been ordered, advised, or asked to seek counseling or treatment as a result of your illegal use of drugs or controlled substances?',{h:1,s:'Ordered or advised to seek drug counseling (ever)',tag:SEC}),
+  YD('m18','Have you <b>EVER</b> voluntarily sought counseling or treatment as a result of your use of a drug or controlled substance?',{h:1,s:'Voluntarily sought drug counseling (ever)',tag:SEC}),
+  YD('m19','Have you ever tried, used, sold, supplied, or possessed any narcotic (to include heroin and cocaine), depressant (to include Quaaludes), stimulant, hallucinogen (to include LSD or PCP), or cannabis (to include marijuana or hashish), or any mind-altering substance (to include glue or paint), or anabolic steroid, except as prescribed by a licensed physician?',{s:'Ever tried, used, sold or possessed any listed drug or substance',tag:SEC}),
+  G('Marijuana',[T('mj1','When was the last time you smoked marijuana?',{ph:'For example: never, or about 3 years ago'}),T('mj2','When was the last time you smelled it?')])
+]});
+
+/* ---------- Technology and associations ---------- */
+STEPS.push({id:'tech',title:'Technology and groups',items:[
+  G('Technology',[
+    YD('t1','In the last seven (7) years have you illegally or without proper authorization accessed or attempted to access any information technology system?',{s:'Unauthorized access to an IT system (7 years)'}),
+    YD('t2','In the last seven (7) years have you illegally or without authorization modified, destroyed, manipulated, or denied others access to information residing on an information technology system, or attempted any of the above?',{s:'Modified, destroyed or blocked IT information (7 years)'}),
+    YD('t3','In the last seven (7) years have you introduced, removed, or used hardware, software, or media in connection with any information technology system without authorization, when specifically prohibited by rules, procedures, guidelines, or regulations, or attempted any of the above?',{s:'Unauthorized hardware, software or media on an IT system (7 years)'})
+  ]),
+  G('Group and member associations',[
+    YD('a1','Are you now or have you EVER been a member of an organization dedicated to terrorism, either with an awareness of the organization\'s dedication to that end, or with the specific intent to further such activities?',{s:'Member of a terrorism organization'}),
+    YD('a2','Have you EVER knowingly engaged in any acts of terrorism?',{s:'Acts of terrorism'}),
+    YD('a3','Have you EVER advocated any acts of terrorism or activities designed to overthrow the U.S. Government by force?',{s:'Advocated terrorism or overthrow of the U.S. Government'}),
+    YD('a4','Have you EVER been a member of an organization dedicated to the use of violence or force to overthrow the United States Government, and which engaged in activities to that end with an awareness of the organization\'s dedication to that end or with the specific intent to further such activities?',{s:'Member of an organization to overthrow the U.S. Government by force'}),
+    YD('a5','Have you EVER been a member of an organization that advocates or practices commission of acts of force or violence to discourage others from exercising their rights under the U.S. Constitution or any state of the United States with the specific intent to further such action?',{s:'Member of an organization using force to deny constitutional rights'}),
+    YD('a6','Have you EVER knowingly engaged in activities designed to overthrow the U.S. Government by force?',{s:'Activities to overthrow the U.S. Government by force'}),
+    YD('a7','Have you EVER associated with anyone involved in activities to further terrorism?',{s:'Associated with anyone furthering terrorism'})
+  ])
+]});
+
+/* ---------- Foreign history (shown when the foreign-ties screener is Yes) ---------- */
+const FYN=[
+ ['Do you have, or have you had, close and/or continuing contact with a foreign national within <b>the last seven (7) years</b> with whom you, or your spouse, or cohabitant are bound by affection, influence, common interests, and/or obligation? Include associates as well as relatives, not previously listed in Family and Associates.','Close contact with a foreign national (7 years)'],
+ ['Have you, your spouse, cohabitant, or dependent children <b>EVER</b> had any foreign financial interests (such as stocks, property, investments, bank accounts, ownership of corporate entities, corporate interests or businesses) in which you have direct control or direct ownership? (Exclude financial interests in companies or diversified mutual funds that are publicly traded on a U.S. exchange.)','Foreign financial interests'],
+ ['Have you, your spouse, cohabitant, or dependent children <b>EVER</b> had any foreign financial interests that someone controlled on your behalf?','Foreign financial interests controlled by someone else'],
+ ['Have you, your spouse, cohabitant, or dependent children <b>EVER</b> owned, or do you anticipate owning, or plan to purchase real estate in a foreign country?','Foreign real estate'],
+ ['As a U.S. citizen, have you, your spouse, cohabitant, or dependent children received <b>in the past seven (7) years</b>, or are eligible to receive in the future, any educational, medical, retirement, social welfare, or other such benefit from a foreign country?','Foreign benefits received or eligible for (7 years)'],
+ ['Have you <b>EVER</b> provided financial support for any foreign national?','Financial support for a foreign national'],
+ ['Have you <b>in the past seven (7) years</b> provided advice or support to any individual associated with a foreign business or other foreign organization that you have not previously listed as a former employer? (Answer No if all your advice or support was authorized pursuant to official U.S. Government business.)','Advice or support to a foreign business or organization (7 years)'],
+ ['Have you, your spouse, cohabitant, or any member of your immediate family <b>in the past seven (7) years</b> been asked to provide advice or serve as a consultant, even informally, by any foreign government official or agency? (Answer No if all the advice or support was authorized pursuant to official U.S. Government business.) Immediate family means your spouse, parent, step-parents, siblings, half and step-siblings, children, step-children, and cohabitant.','Asked to advise a foreign government (7 years)'],
+ ['Has any foreign national <b>in the past seven (7) years</b> offered you a job, asked you to work as a consultant, or consider employment with them?','Job or consulting offer from a foreign national (7 years)'],
+ ['Have you <b>in the past seven (7) years</b> been involved in any other type of business venture with a foreign national not described above (own, co-own, serve as business consultant, provide financial support, etc.)?','Other business venture with a foreign national (7 years)'],
+ ['Have you <b>in the past seven (7) years</b> attended or participated in any conferences, trade shows, seminars, or meetings outside the U.S.? (Do not include those you attended or participated in on official business for the U.S. government.)','Conferences or meetings outside the U.S. (7 years)'],
+ ['Have you or any member of your immediate family <b>in the past seven (7) years</b> had any contact with a foreign government, its establishment (such as embassy, consulate, agency, military service, intelligence or security service, etc.) or its representatives, whether inside or outside the U.S.? (Answer No if the contact was for routine visa applications and border crossings related to either official U.S. Government travel or foreign travel on a U.S. passport.)','Contact with a foreign government (7 years)'],
+ ['Have you <b>in the past seven (7) years</b> sponsored any foreign national to come to the U.S. as a student, for work, or for permanent residence?','Sponsored a foreign national (7 years)'],
+ ['Have you <b>EVER</b> held political office in a foreign country?','Held political office in a foreign country'],
+ ['Have you <b>EVER</b> voted in the election of a foreign country?','Voted in a foreign election']
+];
+STEPS.push({id:'foreign',title:'Foreign history',blurb:'You said you have ties to another country, so these questions apply to you.',show:A=>A.forgate==='Yes',items:[
+  ...FYN.map((q,i)=>YD('f'+(i+1),q[0],{h:1,s:q[1]})),
+  Y('f16','Have you <b>EVER</b> been issued a passport (or identity card for travel) by a country other than the U.S.?',{h:1,s:'Passport or travel ID from another country',then:[T('f16c','Which country?')]}),
+  Y('f17','Have you traveled outside the U.S. <b>in the last seven (7) years</b>?',{h:1,s:'Travel outside the U.S. (7 years)',then:[
+    RP('trips','Trip',[T('tc','Country',{w:'l'}),T('tr','Reason',{w:'l'}),D('tf','From',{w:'s'}),D('tt','To',{w:'s'})],{min:1,max:25,title:i=>'Trip '+(i+1),add:'Add another trip'})]})
+]});
+
+/* ---------- Background and investigation ---------- */
+const bd=(id,t,s,o)=>YD(id,t,ex({h:1,s},o));
+STEPS.push({id:'bg',title:'Background',items:[
+  bd('b2','Have you <b>EVER</b> served, as a civilian or military member in a foreign country\'s military, intelligence, diplomatic, security forces, militia, other defense force, or government agency?','Served a foreign military or government'),
+  bd('b3','Have you <b>EVER</b> received a discharge that was not honorable?','Discharge that was not honorable',{show:A=>A.prior==='Yes'}),
+  bd('b4','In the last 7 years, have you been subject to court martial or other disciplinary procedure under the Uniform Code of Military Justice (UCMJ), such as Article 15, Captain\'s mast, Article 135 Court of Inquiry, etc.?','UCMJ discipline (7 years)',{show:A=>A.prior==='Yes'}),
+  bd('b5','Are you now or have you ever been a deserter from any branch of the armed forces of the United States?','Deserter',{show:A=>A.prior==='Yes'}),
+  bd('b6','Have you ever been employed by the United States Government?','Employed by the U.S. Government'),
+  bd('b7','Are you now drawing, or do you have an application pending for, or approval for: retired pay, disability allowance, severance pay, or pension from any agency of the government of the United States?','Retired pay, disability, severance or pension from the U.S. Government'),
+  bd('b8','Are you now or have you ever been a conscientious objector? (That is, do you have, or have you ever had, a firm, fixed, and sincere objection to participation in war in any form or to the bearing of arms because of religious belief or training?)','Conscientious objector'),
+  bd('b9','Is there anything which would preclude you from performing military duties or participating in military activities whenever necessary? (That is, do you have any personal restrictions or religious practices which would restrict your availability?)','Anything that would prevent military duties'),
+  bd('b10','Have you ever been discharged by any branch of the Armed Forces of the United States for reasons pertaining to being a conscientious objector?','Discharged as a conscientious objector',{show:A=>A.prior==='Yes'}),
+  bd('b11','Have you ever been an officer or a member or made a contribution to an organization dedicated to the violent overthrow of the United States Government and which engages in illegal activities to that end, knowing that the organization engages in such activities with the specific intent to further such activities?','Member of or contributor to a violent-overthrow organization'),
+  bd('b12','Have you ever knowingly engaged in any acts or activities designed to overthrow the United States Government by force?','Acts to overthrow the U.S. Government by force'),
+  bd('b13','Has the U.S. Government (or a foreign government) <b>EVER</b> investigated your background and/or granted you a security clearance eligibility/access?','Background investigation or clearance granted'),
+  bd('b14','Have you <b>EVER</b> had a security clearance eligibility/access authorization denied, suspended, or revoked? (An administrative downgrade or administrative termination of a security clearance is not a revocation.)','Clearance denied, suspended or revoked'),
+  bd('b15','Have you <b>EVER</b> been debarred from government employment?','Debarred from government employment'),
+  G('Selective Service',[
+    N('<p>Males born after December 31, 1959 must be registered. Go to <a href="https://www.sss.gov" target="_blank" rel="noopener">sss.gov</a> and check your registration number. You only need your name, birthday and Social Security number. If it does not show one for you, you will need to register. Once registered you will receive a number right away.</p>'),
+    T('sss','Selective Service Number')
+  ],{show:A=>A.sex==='Male'&&A.dob&&A.dob>'1959-12-31'})
+]});
+
+/* ---------- Financial history ---------- */
+STEPS.push({id:'fin',title:'Financial history',blurb:'Answer each question. Explain any Yes answer in the box that appears.',items:[
+  YD('fi1','In the last seven (7) years have you filed a petition under any chapter of the bankruptcy code?',{s:'Bankruptcy petition (7 years)'}),
+  YD('fi2','Have you <b>EVER</b> experienced financial problems due to gambling?',{h:1,s:'Financial problems from gambling'}),
+  YD('fi3','In the last seven (7) years have you failed to file or pay federal, state, or other taxes when required by law or ordinance?',{s:'Failed to file or pay taxes (7 years)'}),
+  YD('fi4','In the past seven (7) years have you been counseled, warned, or disciplined for violating the terms of agreement for a travel or credit card provided by your employer?',{s:'Disciplined for employer card misuse (7 years)'}),
+  YD('fi5','Are you currently utilizing, or seeking assistance from, a credit counseling service or other similar resource to resolve your financial difficulties?',{s:'Credit counseling or similar help'}),
+  YD('fi6','<b>Other than previously listed, have any of the following happened to you?</b><ul><li>In the past seven (7) years, you have been delinquent on alimony or child support payments.</li><li>In the past seven (7) years, you had a judgement entered against you. (Include obligations where you were the sole debtor, and those where you were a cosigner or guarantor.)</li><li>In the past seven (7) years, you had a lien placed against your property for failing to pay taxes or other debts. (Include obligations where you were the sole debtor, and those where you were a cosigner or guarantor.)</li><li>You are currently delinquent on any federal debt. (Include obligations where you are the sole debtor, and those where you are a cosigner or guarantor.)</li></ul>',{h:1,s:'Delinquent support, judgment, lien, or delinquent federal debt'}),
+  YD('fi7','<b>Other than previously listed, have any of the following happened?</b><ul><li>In the past seven (7) years, you had any possessions or property voluntarily or involuntarily repossessed or foreclosed.</li><li>In the past seven (7) years, you defaulted on any type of loan.</li><li>In the past seven (7) years, you had bills or debts turned over to a collection agency.</li><li>In the past seven (7) years, you had any account or credit card suspended, charged off, or cancelled for failing to pay as agreed.</li><li>In the past seven (7) years, you were evicted for non-payment.</li><li>In the past seven (7) years, you had your wages, benefits, or assets garnished or attached for any reason.</li><li>In the past seven (7) years, you have been over 120 days delinquent on any debt not previously entered.</li><li>You are currently over 120 days delinquent on any debt.</li></ul>(Include obligations where you were the sole debtor, and those where you were a cosigner or guarantor.)',{h:1,s:'Repossession, default, collections, eviction, garnishment, or debt over 120 days late'})
+]});
+
+/* ---------- Character references ---------- */
+STEPS.push({id:'refs',title:'Character references',blurb:'Provide three people who know you well and who preferably live in the U.S. They should be friends, peers, colleagues, college roommates, associates, etc., who are collectively aware of your activities outside your workplace, school, or neighborhood, and whose combined association with you covers at least the last seven (7) years. Do not list your spouse, former spouse(s), other relatives, or anyone listed elsewhere on this form.',items:[
+  RP('crefs','Reference',[...nm('cr',{req:true}),T('crrel','Relationship',{w:'l'}),D('crsince','Known since',{w:'l'}),T('crph','Phone',{type:'tel',w:'l'}),T('cremail','Email',{type:'email',w:'l'}),G('Address',addr('crad'))],{min:3,max:3,title:i=>'Reference '+(i+1),after:arr=>dupRefs(arr.map(e=>({rff:e.crf,rfl:e.crl})))})
+]});
+
+/* ---------- Tattoos, gauges, brandings ---------- */
+STEPS.push({id:'body',title:'Tattoos, gauges and brandings',show:A=>A.tat==='Yes'||A.gau==='Yes'||A.brand==='Yes',items:[
+  RP('tats','Tattoo',[T('td','Description',{ph:'Full description'}),T('tl','Location on body',{w:'l'}),T('tm','Meaning',{w:'l'})],{show:A=>A.tat==='Yes',min:1,max:20,title:i=>'Tattoo '+(i+1),add:'Add another tattoo'}),
+  RP('gaus','Gauge',[T('gd','Description'),T('gs','Size',{w:'l'})],{show:A=>A.gau==='Yes',min:1,max:10,title:i=>'Gauge '+(i+1),add:'Add another gauge'}),
+  N('<p>Maximum gauge allowance is 1.6 mm / .063" / 16 gauge.</p>',{show:A=>A.gau==='Yes'}),
+  RP('brands','Branding',[T('bdsc','Description',{ph:'Full description'}),T('bl','Location on body',{w:'l'}),T('bm','Meaning',{w:'l'})],{show:A=>A.brand==='Yes',min:1,max:10,title:i=>'Branding '+(i+1),add:'Add another branding'})
+]});
+
+/* ---------- engine: state, rendering, validation ---------- */
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const strip=h=>String(h).replace(/<li>/g,' • ').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+const clip=(s,n)=>s.length>n?s.slice(0,n-1).trim()+'…':s;
+ST.A.med={};ST.A.medNone={};
+const A=ST.A;
+const getP=(path)=>{let o=A;for(const k of path.split('.')){if(o==null)return undefined;o=o[k];}return o;};
+const setP=(path,v)=>{const ks=path.split('.');let o=A;for(let i=0;i<ks.length-1;i++){if(o[ks[i]]==null)o[ks[i]]={};o=o[ks[i]];}o[ks[ks.length-1]]=v;};
+const vis=(it,sc,ix)=>!it.show||!!it.show(A,sc,ix);
+const kids=(it,sc)=>{const v=sc[it.id];if(!it.then)return[];if(typeof it.then==='function')return it.then(v)||[];return(it.t==='yn'&&v==='Yes')?it.then:[];};
+const ensureRep=(it,sc)=>{const a=sc[it.id]||(sc[it.id]=[]);const m=it.min==null?1:it.min;while(a.length<m)a.push({});return a;};
+const reqd=it=>it.req||it.rr||(it.t==='yn'&&!it.opt);
+const empty=v=>v==null||String(v).trim()==='';
+const stepsNow=()=>[{id:'welcome',title:'Start'}].concat(STEPS.filter(s=>!s.show||s.show(A)),[{id:'review',title:'Your summary'}]);
+
+/* count of visible required items still empty */
+function missing(items,sc,ix){
+  let n=0;
+  for(const it of items){
+    if(!vis(it,sc,ix))continue;
+    if(it.t==='group')n+=missing(it.items,sc,ix);
+    else if(it.t==='repeat'){const a=ensureRep(it,sc);a.forEach((e,i)=>{n+=missing(it.items,e,i);});}
+    else{
+      if(['note','calc'].includes(it.t))continue;
+      if((reqd(it)&&empty(sc[it.id]))||(it.t==='date'&&sc['~'+it.id]))n++;
+      n+=missing(kids(it,sc),sc,ix);
+    }
+  }
+  return n;
+}
+const medApplies=g=>!g.only||A.sex===g.only;
+function medMissing(step){
+  let n=0;
+  step.med.forEach((g,gi)=>{if(!medApplies(g))return;const k=step.id+':'+gi;if(!A.medNone[k]&&!g.items.some(x=>A.med[x.n]&&A.med[x.n].on))n++;});
+  return n;
+}
+
+/* ---------- rendering ---------- */
+function ctl(it,sc,path){
+  const v=sc[it.id];const id='f_'+path.replace(/\./g,'_');
+  const val=v==null?'':v;
+  if(it.t==='date'){
+    const raw=sc['~'+it.id];const disp=v?fd(v):(raw||'');
+    return `<input id="${id}" type="text" data-p="${path}" data-date="1" value="${esc(disp)}" inputmode="numeric" maxlength="10" placeholder="MM/DD/YYYY" autocomplete="off" aria-describedby="dh_${id}"><div class="dhint" id="dh_${id}">Month / day / year</div>`;
+  }
+  if(it.t==='text'){
+    const ty=(it.type||'text');
+    return `<input id="${id}" type="${ty}" data-p="${path}" value="${esc(val)}"${it.mode?` inputmode="${it.mode}"`:''}${it.max?` maxlength="${it.max}"`:''}${it.ph?` placeholder="${esc(it.ph)}"`:''} autocomplete="${it.ac||(ty==='password'?'new-password':'off')}"${ty==='text'?' autocapitalize="words"':''}>`;
+  }
+  if(it.t==='area')return `<textarea id="${id}" data-p="${path}" autocomplete="off">${esc(val)}</textarea>`;
+  if(it.t==='select')return `<select id="${id}" data-p="${path}"><option value="">Select…</option>${it.opts.map(o=>`<option value="${esc(o)}"${o===v?' selected':''}>${esc(o)}</option>`).join('')}</select>`;
+  if(it.t==='yn'||it.t==='radio'){
+    const opts=it.t==='yn'?['Yes','No']:it.opts;const wrap=it.t==='radio'&&(it.sw||opts.length>3||opts.join('').length>40);
+    return `<div class="seg${wrap?' sw':''}" role="radiogroup">${opts.map(o=>`<label><input type="radio" name="${path}" data-p="${path}" value="${esc(o)}"${o===v?' checked':''}><span>${esc(o)}</span></label>`).join('')}</div>`;
+  }
+  if(it.t==='calc')return `<div class="ro" data-calc="${it.id}">${esc(it.get(A))}</div>`;
+  return '';
+}
+function field(it,sc,ix,pre){
+  const path=pre+it.id;
+  if(it.t==='note')return `<div class="note">${it.html}</div>`;
+  if(it.t==='group'){
+    return `<fieldset><legend>${esc(it.title)}</legend><div class="grid">${renderItems(it.items,sc,ix,pre)}</div></fieldset>`;
+  }
+  if(it.t==='repeat'){
+    const arr=ensureRep(it,sc);const min=it.min==null?1:it.min;const max=it.max||10;
+    let h='<div class="rep">';
+    arr.forEach((e,i)=>{
+      const ttl=typeof it.title==='function'?it.title(i,e):it.title+' '+(i+1);
+      h+=`<fieldset class="card"><legend>${esc(ttl)}</legend>${arr.length>min?`<button type="button" class="rm" data-act="rm" data-p="${path}" data-i="${i}">Remove</button>`:''}<div class="grid">${renderItems(it.items,e,i,path+'.'+i+'.')}</div></fieldset>`;
+    });
+    if(it.after){AFT[path]=()=>it.after(arr)||'';h+=`<div data-aft="${path}">${it.after(arr)||''}</div>`;}
+    if(arr.length<max)h+=`<button type="button" class="add" data-act="add" data-p="${path}">+ ${esc(it.add||('Add another '+String(it.title).toLowerCase()))}</button>`;
+    return h+'</div>';
+  }
+  const partial=it.t==='date'&&!!sc['~'+it.id];
+  const bad=ST.err&&!['calc'].includes(it.t)&&((reqd(it)&&empty(sc[it.id]))||partial);
+  const isq=it.t==='yn'||it.t==='radio';
+  const lab=it.h?it.label:esc(it.label);
+  const cls=['f',it.t==='yn'?'yn':'',it.w||'',bad?'err':''].filter(Boolean).join(' ');
+  let h=`<div class="${cls}">`;
+  if(it.tag)h+=`<div class="tag">${esc(it.tag)}</div>`;
+  h+=isq?`<div class="q" id="q_${path.replace(/\./g,'_')}">${lab}${reqd(it)?'':''}</div>`:`<label for="f_${path.replace(/\./g,'_')}">${lab}${reqd(it)&&!isq?' <span class="rq">*</span>':''}</label>`;
+  h+=ctl(it,sc,path);
+  if(bad)h+=`<div class="em">${isq?'Choose an answer.':(partial?'Enter the full date as MM/DD/YYYY.':'This is required.')}</div>`;
+  const k=kids(it,sc);
+  if(k.length)h+=`<div class="follow">${renderItems(k,sc,ix,pre)}</div>`;
+  return h+'</div>';
+}
+function renderItems(items,sc,ix,pre){
+  return items.filter(it=>vis(it,sc,ix)).map(it=>{const h=field(it,sc,ix,pre);return it.t==='note'||it.t==='group'||it.t==='repeat'?h:h;}).join('');
+}
+const MDF=[['when','When did this happen? (dates)','text'],['who','Doctor, clinic or hospital (with city and state)','text'],['what','What happened and what was done?','area'],['now','Current status','text']];
+function renderMed(step){
+  let h=`<p class="blurb">${esc(step.blurb)}</p><div class="rep" style="margin-top:18px">`;
+  step.med.forEach((g,gi)=>{
+    if(!medApplies(g))return;
+    const k=step.id+':'+gi;const none=!!A.medNone[k];const any=g.items.some(x=>A.med[x.n]&&A.med[x.n].on);
+    const bad=ST.err&&!none&&!any;
+    h+=`<fieldset class="med${bad?' err':''}"><legend>${esc(g.name)}</legend>`;
+    h+=`<label class="chk none${none?' on':''}"><input type="checkbox" data-mn="${k}"${none?' checked':''}${any?' disabled':''}><span>None of these apply to me${any?' (clear the items below first)':''}</span></label>`;
+    g.items.forEach(x=>{
+      const m=A.med[x.n]||{};const on=!!m.on;
+      h+=`<label class="chk${on?' on':''}"><input type="checkbox" data-mi="${x.n}" data-mk="${k}"${on?' checked':''}><span><i>${x.n}.</i> ${esc(x.q)}</span></label>`;
+      if(on){
+        h+=`<div class="mdet"><div class="grid">`+MDF.map(f=>`<div class="f ${f[2]==='area'?'':'l'}"><label for="md_${x.n}_${f[0]}">${f[1]}</label>${f[2]==='area'?`<textarea id="md_${x.n}_${f[0]}" data-md="${x.n}.${f[0]}">${esc(m[f[0]]||'')}</textarea>`:`<input id="md_${x.n}_${f[0]}" type="text" data-md="${x.n}.${f[0]}" value="${esc(m[f[0]]||'')}" autocomplete="off">`}</div>`).join('')+`</div>${x.help?`<div class="note help" style="margin-top:10px"><p>${esc(x.help)}</p></div>`:''}</div>`;
+      }
+    });
+    if(bad)h+=`<div class="em">Tap "None of these apply" or tap each one that applies.</div>`;
+    h+='</fieldset>';
+  });
+  return h+'</div>';
+}
+function renderStep(s){
+  if(s.med)return `<h2>${esc(s.title)}</h2>`+renderMed(s);
+  return `<h2>${esc(s.title)}</h2>${s.blurb?`<p class="blurb">${esc(s.blurb)}</p>`:''}<div class="grid">${renderItems(s.items,A,0,'')}</div>`;
+}
+function updateCalcs(){document.querySelectorAll('[data-calc]').forEach(el=>{const it=findCalc(el.getAttribute('data-calc'));if(it)el.textContent=it.get(A);});}
+let _calcs=null;
+function findCalc(id){if(!_calcs){_calcs={};const w=l=>l.forEach(it=>{if(it.t==='calc')_calcs[it.id]=it;if(it.items)w(it.items);if(typeof it.then==='object'&&it.then)w(it.then);});STEPS.forEach(s=>w(s.items));}return _calcs[id];}
+
+/* ---------- typed dates (MM/DD/YYYY) ---------- */
+let AFT={};
+function updateAfters(){document.querySelectorAll('[data-aft]').forEach(el=>{const f=AFT[el.getAttribute('data-aft')];if(f)el.innerHTML=f();});}
+function fmtDate(v){
+  const trailing=/\D$/.test(v);const segs=v.split(/\D+/);if(trailing)segs.pop();
+  if(segs.length>=2&&segs[0].length===1)segs[0]='0'+segs[0];
+  if(segs.length>=3&&segs[1].length===1)segs[1]='0'+segs[1];
+  if(trailing){const l=segs.length-1;if(l<2&&segs[l].length===1)segs[l]='0'+segs[l];}
+  const d=segs.join('').slice(0,8);
+  let o=d.length>4?d.slice(0,2)+'/'+d.slice(2,4)+'/'+d.slice(4):d.length>2?d.slice(0,2)+'/'+d.slice(2):d;
+  if(trailing&&(d.length===2||d.length===4))o+='/';
+  return o;
+}
+function parseUS(s){
+  const m=/^(\d{2})\/(\d{2})\/(\d{4})$/.exec(s);if(!m)return'';
+  const mm=+m[1],dd=+m[2],yy=+m[3];
+  if(mm<1||mm>12||yy<1900||yy>2100)return'';
+  if(dd<1||dd>new Date(yy,mm,0).getDate())return'';
+  return m[3]+'-'+m[1]+'-'+m[2];
+}
+function dateInput(t,p){
+  const f=fmtDate(t.value);t.value=f;
+  const isoV=parseUS(f);const rawP=p.replace(/([^.]+)$/,'~$1');
+  setP(p,isoV);setP(rawP,isoV?'':f);
+  t.classList.toggle('bad',f.length===10&&!isoV);
+}
+
+/* ---------- summary ---------- */
+function docsList(){
+  const L=[['Birth certificate*'],['Social Security card*'],['Driver\'s license*'],['High school diploma*'],['High school transcripts*']];
+  const add=t=>L.push([t]);
+  const college=A.col||['Associate','BA/BS','Master\'s','Doctorate'].includes(A.hlevel)||(+A.cred>0);
+  if(college){add('College diploma*');add('College transcripts*');}
+  if(['Married','Separated','Divorced','Widowed'].includes(A.mar)||A.pm==='Yes')add('Marriage certificate*');
+  if(A.kids==='Yes'||A.dep==='Yes'){add('Dependents\' birth certificates*');add('Dependents\' Social Security cards*');}
+  if(A.mar==='Married'||A.mar==='Separated')add('Spouse\'s driver\'s license');
+  if(A.mar==='Divorced'||A.mar==='Separated'||A.div==='Yes'||(A.former||[]).some(f=>f.fsend==='Divorced'))add('Divorce decree');
+  if(A.supp==='Yes'||A.cust==='Yes'||A.relq==='Yes')add('Child support / custody documents');
+  if(Object.keys(A.med).some(n=>A.med[n].on))add('Medical documents (hospital and doctor records for each medical Yes answer)');
+  if(anyLaw(A))add('Court documents');
+  if(A.fi1==='Yes')add('Bankruptcy documents');
+  if(A.prior==='Yes')add('Prior service discharge documents (DD Form 214 or NGB Form 22)');
+  if(A.cit==='Immigrant alien'||A.cit==='Born abroad')add('Other: immigration or citizenship documents');
+  return L.map(x=>x[0]);
+}
+const fval=(it,v)=>it.t==='date'?fd(v):String(v);
+function walk(items,sc,ix,G,flags,sec){
+  for(const it of items){
+    if(!vis(it,sc,ix))continue;
+    if(it.t==='note')continue;
+    if(it.t==='group'){const g2={title:it.title,rows:[],sub:[]};G.sub.push(g2);walk(it.items,sc,ix,g2,flags,sec);continue;}
+    if(it.t==='repeat'){
+      (sc[it.id]||[]).forEach((e,i)=>{
+        const ttl=typeof it.title==='function'?it.title(i,e):it.title+' '+(i+1);
+        const g3={title:ttl,rows:[],sub:[]};G.sub.push(g3);walk(it.items,e,i,g3,flags,sec);
+      });continue;
+    }
+    const v=sc[it.id];
+    if(it.t==='calc'){const c=it.get(A);if(c)G.rows.push({l:it.label,v:c});continue;}
+    const lab=it.t==='yn'?(it.s||clip(strip(it.label),150)):strip(it.label);
+    if(it.t==='yn'){
+      if(v){const d=sc[it.id+'_d'];const row={l:lab,v:v+(v==='Yes'&&d?' — '+d:''),yes:v==='Yes',tag:it.tag};G.rows.push(row);if(v==='Yes'&&!it.opt&&sec!=='Quick questions')flags.push({sec,l:lab,d:d||'',tag:it.tag});}
+    }else if(!empty(v)){G.rows.push({l:lab,v:fval(it,v)});}
+    kids(it,sc).filter(k=>!(k.id&&/_d$/.test(k.id))).length&&walk(kids(it,sc).filter(k=>!(k.id&&/_d$/.test(k.id))),sc,ix,G,flags,sec);
+  }
+}
+function buildModel(){
+  const sections=[],flags=[];
+  stepsNow().forEach(s=>{
+    if(s.id==='welcome'||s.id==='review')return;
+    const G={title:s.title,rows:[],sub:[]};
+    if(s.med){
+      const none=[];
+      s.med.forEach((g,gi)=>{
+        if(!medApplies(g))return;
+        const on=g.items.filter(x=>A.med[x.n]&&A.med[x.n].on);
+        if(!on.length){if(A.medNone[s.id+':'+gi])none.push(g.name);return;}
+        on.forEach(x=>{const m=A.med[x.n];const det=[m.when&&'When: '+m.when,m.who&&'Provider: '+m.who,m.what&&'Details: '+m.what,m.now&&'Current status: '+m.now].filter(Boolean).join('\n');
+          G.rows.push({l:x.n+'. '+clip(x.q,170),v:'Yes'+(det?'\n'+det:''),yes:true});
+          flags.push({sec:s.title,l:x.n+'. '+clip(x.q,170),d:det});});
+      });
+      if(none.length)G.none='No issues reported in: '+none.join(', ')+'.';
+    }else walk(s.items,A,0,G,flags,s.title);
+    sections.push(G);
+  });
+  return{sections,flags,docs:docsList()};
+}
+const fname=()=>[A.nf,A.nm,A.nl,A.nsuf].filter(Boolean).join(' ')||'Applicant';
+function rowsHtml(rows){return rows.map(r=>`<div class="r${r.yes?' yes':''}"><div class="rl">${esc(r.l)}</div><div class="rv">${esc(r.v)}</div></div>`).join('');}
+function groupHtml(g,top){
+  const has=g.rows.length||(g.sub&&g.sub.some(x=>x.rows.length||(x.sub&&x.sub.length)));
+  if(!has&&!g.none)return'';
+  let h=top?`<section class="ds"><h3>${esc(g.title)}</h3>`:`<div class="sg"><div class="sgt">${esc(g.title)}</div>`;
+  h+=rowsHtml(g.rows);if(g.none)h+=`<div class="none2">${esc(g.none)}</div>`;
+  (g.sub||[]).forEach(s=>{h+=groupHtml(s,false);});
+  return h+(top?'</section>':'</div>');
+}
+function summaryHtml(m){
+  const now=new Date();const today=fd(iso(now));
+  let h=`<div class="doc"><div class="dh"><h1>National Guard application summary</h1><div>${esc(fname())} · prepared ${esc(today)} · Kentucky Army National Guard</div></div>`;
+  h+=`<section class="dflag ds"><h3>Answered Yes (${m.flags.length})</h3>`;
+  if(!m.flags.length)h+='<div class="none2">No Yes answers.</div>';
+  let last='';m.flags.forEach(f=>{if(f.sec!==last){h+=`<div class="fs">${esc(f.sec)}</div>`;last=f.sec;}h+=`<div class="fl">${esc(f.l)}${f.d?`<div class="det">${esc(f.d).replace(/\n/g,'<br>')}</div>`:''}</div>`;});
+  h+='</section>';
+  h+=`<section class="ddocs ds"><h3>Documents to bring</h3><ul>${m.docs.map(d=>`<li>${esc(d)}</li>`).join('')}</ul><div class="none2">* Documents must be original or certified copies.</div></section>`;
+  m.sections.forEach(g=>{h+=groupHtml(g,true);});
+  return h+'</div>';
+}
+function groupText(g,ind){
+  let t='';const pad='  '.repeat(ind);
+  g.rows.forEach(r=>{t+=pad+r.l+': '+String(r.v).replace(/\n/g,'\n'+pad+'   ')+'\n';});
+  if(g.none)t+=pad+g.none+'\n';
+  (g.sub||[]).forEach(s=>{if(s.rows.length||(s.sub&&s.sub.length)){t+=pad+'['+s.title+']\n'+groupText(s,ind+1);}});
+  return t;
+}
+function summaryText(m){
+  let t='NATIONAL GUARD APPLICATION SUMMARY\n'+fname()+' | prepared '+fd(iso(new Date()))+' | Kentucky Army National Guard\n\n';
+  t+='ANSWERED YES ('+m.flags.length+')\n';
+  let last='';m.flags.forEach(f=>{if(f.sec!==last){t+='\n'+f.sec+'\n';last=f.sec;}t+=' - '+f.l+(f.d?'\n     '+f.d.replace(/\n/g,'\n     '):'')+'\n';});
+  t+='\nDOCUMENTS TO BRING\n'+m.docs.map(d=>' - '+d).join('\n')+'\n(* Original or certified copies)\n';
+  m.sections.forEach(g=>{const b=groupText(g,0);if(b.trim())t+='\n=== '+g.title.toUpperCase()+' ===\n'+b;});
+  return t;
+}
+
+/* ---------- app shell ---------- */
+const $=id=>document.getElementById(id);
+let cur=0;
+function welcomeHtml(){
+  return `<div class="wrap hero"><h1>National Guard application</h1><p class="sub">Kentucky Army National Guard. Complete this form on your phone, tablet or computer, then send the summary to your recruiter.</p>
+  <div class="note warn"><p><b>Nothing is saved.</b> Your answers stay on this device and are not stored or sent anywhere. If you close this page, refresh it or lose your connection, <b>you will lose everything you entered</b> and start over. Plan to finish in one sitting, and do not use the back button of your browser. If you need a break, tap <b>Save progress</b> at the top of any step to get a progress code you can paste back in later.</p></div>
+  <h3>How it works</h3><ul><li>You answer a few quick questions first. They decide which sections you see, so you skip what does not apply to you.</li><li>For medical history, tap "None of these apply" for each group, or tap everything that applies and add details.</li><li>At the end you get a summary to save as a PDF and send to your recruiter.</li></ul>
+  <h3>Have these ready</h3><ul><li>Social Security number, and your spouse's if you are married</li><li>Addresses and employers for the last 10 years, or since you turned 16, with a reference for each address</li><li>Schools attended, with dates</li><li>Names, birth dates and addresses of family members</li><li>Details of any medical, legal or financial history</li><li>Your DD Form 214 or NGB Form 22 if you served before</li></ul><div class="rsm"><h3>Already started?</h3><p>Paste your progress code to pick up where you stopped.</p><div class="f"><label for="rescode">Progress code</label><textarea id="rescode" autocomplete="off" spellcheck="false"></textarea></div><div class="acts" style="margin-top:0"><button type="button" class="btn ghost" data-act="resume">Resume</button></div><div id="resmsg" class="em" role="status"></div></div></div>`;
+}
+function reviewHtml(){
+  const m=buildModel();_text=summaryText(m);
+  const ex_=STANDALONE?`<button type="button" class="btn" data-act="print">Print or save as PDF</button>`:'';
+  return `<div class="wrap" style="padding-top:20px;padding-bottom:130px"><div class="noprint"><h2 style="font-size:32px;text-transform:uppercase">Your summary</h2>
+  <div class="note" style="margin-top:10px"><p><b>Look it over, then save it and send it to your recruiter.</b> To save a PDF, open your browser's menu (or Share), choose Print, then Save as PDF. You can also copy the text below and paste it into an email or message.</p><p>This summary is not saved anywhere. Save it before you close this page.</p></div>
+  <div class="acts">${ex_}<button type="button" class="btn ghost" data-act="copy">Copy summary text</button></div>
+  <div id="copymsg" class="none2" role="status"></div><textarea id="cptext" class="cp" readonly hidden></textarea></div>${summaryHtml(m)}</div>`;
+}
+let _text='';
+function render(keepScroll){
+  const S=stepsNow();if(cur>=S.length)cur=S.length-1;const s=S[cur];const y=keepScroll?window.scrollY:0;
+  $('tt').textContent=cur===0?'Start':s.id==='review'?'Summary':'Step '+cur+' of '+(S.length-2);
+  $('tl').textContent=cur===0?'':s.title;
+  $('fill').style.width=Math.round(cur/(S.length-1)*100)+'%';
+  const main=$('main');
+  if(s.id==='welcome')main.innerHTML=welcomeHtml();
+  else if(s.id==='review')main.innerHTML=reviewHtml();
+  else main.innerHTML='<div class="wrap">'+renderStep(s)+(ST.err?`<div class="alert" id="alert" role="alert">Some required answers are missing. They are marked in red.</div>`:'')+'</div>';
+  main.className=s.id==='welcome'||s.id==='review'?'':'';
+  $('savebtn').hidden=(cur===0);
+  const nb=$('next'),bb=$('back');
+  bb.hidden=cur===0;nb.hidden=s.id==='review';
+  nb.textContent=cur===0?'Start':(cur===S.length-2?'Review summary':'Next');
+  window.scrollTo(0,y);
+}
+function go(d){
+  const S=stepsNow();const s=S[cur];
+  if(d>0&&s.id!=='welcome'){
+    const n=s.med?medMissing(s):missing(s.items,A,0);
+    if(n>0){ST.err=true;render(true);const e=document.querySelector('.err,#alert');if(e)e.scrollIntoView({block:'center',behavior:'smooth'});return;}
+  }
+  ST.err=false;cur=Math.max(0,Math.min(S.length-1,cur+d));render(false);
+}
+function onData(t){
+  const p=t.getAttribute('data-p');let v=t.value;
+  if(t.type==='radio'&&!t.checked)return false;
+  const it=null;
+  if(p){
+    if(t.getAttribute('data-fmt')==='ssn'){}
+    setP(p,v);ST.dirty=true;return true;
+  }
+  return false;
+}
+function ssnFormat(el){const d=el.value.replace(/\D/g,'').slice(0,9);let o=d;if(d.length>5)o=d.slice(0,3)+'-'+d.slice(3,5)+'-'+d.slice(5);else if(d.length>3)o=d.slice(0,3)+'-'+d.slice(3);el.value=o;}
+const SSNIDS=['ssn','spssn'];
+function wire(){
+  const main=$('main');
+  main.addEventListener('input',e=>{
+    const t=e.target;
+    if(t.hasAttribute('data-md')){const[k,f]=t.getAttribute('data-md').split('.');(A.med[k]=A.med[k]||{})[f]=t.value;ST.dirty=true;return;}
+    if(!t.hasAttribute('data-p')||t.type==='radio'||t.tagName==='SELECT')return;
+    const p=t.getAttribute('data-p');
+    if(t.hasAttribute('data-date')){dateInput(t,p);ST.dirty=true;updateCalcs();updateAfters();return;}
+    if(SSNIDS.includes(p.split('.').pop()))ssnFormat(t);
+    setP(p,t.value);ST.dirty=true;updateCalcs();
+  });
+  main.addEventListener('change',e=>{
+    const t=e.target;
+    if(t.hasAttribute('data-mn')){A.medNone[t.getAttribute('data-mn')]=t.checked;ST.dirty=true;render(true);return;}
+    if(t.hasAttribute('data-mi')){const n=t.getAttribute('data-mi');const m=A.med[n]=A.med[n]||{};m.on=t.checked;if(t.checked)delete A.medNone[t.getAttribute('data-mk')];ST.dirty=true;render(true);return;}
+    if(!t.hasAttribute('data-p'))return;
+    if(t.type==='radio'||t.tagName==='SELECT'||t.type==='date'){setP(t.getAttribute('data-p'),t.value);ST.dirty=true;render(true);}
+  });
+  main.addEventListener('click',e=>{
+    const b=e.target.closest('[data-act]');if(!b)return;
+    const act=b.getAttribute('data-act'),p=b.getAttribute('data-p');
+    if(act==='add'){const a=getP(p)||[];a.push({});setP(p,a);ST.dirty=true;render(true);}
+    else if(act==='rm'){const a=getP(p)||[];a.splice(+b.getAttribute('data-i'),1);ST.dirty=true;render(true);}
+    else if(act==='print'){try{window.print();}catch(_){}}
+    else if(act==='copy')copyText();
+    else if(act==='resume')doResume();
+  });
+  $('savebtn').addEventListener('click',openSheet);
+  $('cpcode').addEventListener('click',doCopyCode);
+  $('sheetclose2').addEventListener('click',closeSheet);
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('sheet').hidden)closeSheet();});
+  $('next').addEventListener('click',()=>go(1));
+  $('back').addEventListener('click',()=>go(-1));
+  window.addEventListener('beforeunload',e=>{if(ST.dirty){e.preventDefault();e.returnValue='';}});
+}
+function showText(msg){const ta=$('cptext');if(!ta)return;ta.hidden=false;ta.value=_text;ta.focus();ta.select();const m=$('copymsg');if(m)m.textContent=msg;}
+function copyText(){
+  const done=()=>{const m=$('copymsg');if(m)m.textContent='Copied. Paste it into an email or message to your recruiter.';};
+  try{navigator.clipboard.writeText(_text).then(done,()=>showText('Could not copy automatically. The text is selected below. Copy it manually.'));}
+  catch(_){showText('Could not copy automatically. The text is selected below. Copy it manually.');}
+}
+
+/* ---------- save and resume (progress code) ---------- */
+const CODE_PREFIX='KYNG2.';
+const b64e=u=>{let s='';for(let i=0;i<u.length;i+=0x8000)s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(s);};
+const b64d=t=>{const s=atob(t);const u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u;};
+function makeCode(){
+  const payload=JSON.stringify({v:2,step:stepsNow()[cur].id,A:A});
+  return CODE_PREFIX+b64e(new TextEncoder().encode(payload));
+}
+function readCode(code){
+  const t=String(code).replace(/\s+/g,'');
+  if(t.slice(0,CODE_PREFIX.length)!==CODE_PREFIX)throw new Error('format');
+  try{
+    const o=JSON.parse(new TextDecoder().decode(b64d(t.slice(CODE_PREFIX.length))));
+    if(!o||o.v!==2||!o.A)throw new Error('format');
+    return o;
+  }catch(_){throw new Error('format');}
+}
+function openSheet(){
+  const ta=$('savecode');$('savemsg').textContent='';
+  try{ta.value=makeCode();}catch(_){ta.value='';$('savemsg').textContent='Could not create a code in this browser.';}
+  $('sheet').hidden=false;setTimeout(()=>{try{ta.focus();ta.select();}catch(_){}} ,30);
+}
+const closeSheet=()=>{$('sheet').hidden=true;$('savecode').value='';};
+function doCopyCode(){
+  const ta=$('savecode'),m=$('savemsg');
+  const manual=()=>{ta.focus();ta.select();m.style.color='var(--err)';m.textContent='Could not copy automatically. The code is selected. Copy it manually.';};
+  const ok=()=>{m.style.color='var(--ink)';m.textContent='Copied. Paste it into your notes or an email to yourself.';};
+  try{navigator.clipboard.writeText(ta.value).then(ok,manual);}catch(_){manual();}
+}
+function doResume(){
+  const m=$('resmsg');m.textContent='';
+  const code=$('rescode').value;
+  if(!code.trim()){m.textContent='Paste your progress code first.';return;}
+  try{
+    const o=readCode(code);
+    Object.keys(A).forEach(k=>delete A[k]);Object.assign(A,o.A);
+    if(!A.med)A.med={};if(!A.medNone)A.medNone={};
+    const S=stepsNow();let i=S.findIndex(s=>s.id===o.step);if(i<1)i=1;
+    cur=i;ST.err=false;ST.dirty=true;render(false);
+  }catch(e){m.textContent='That does not look like a progress code from this form. Paste the whole code.';}
+}
+
+wire();render(false);
+
+</script></body></html>
